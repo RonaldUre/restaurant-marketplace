@@ -70,7 +70,7 @@ public class RestaurantPlatformController {
     public RestaurantPublicResponse suspendBySlug(
             @PathVariable
             @Size(min = 1, max = 140)
-            @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$")
+            @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG)
             String slug,
             @RequestParam(required = false) @Size(max = 255) String reason
     ) {

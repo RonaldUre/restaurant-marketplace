@@ -22,7 +22,7 @@ public record UpdateRestaurantProfileCommand(
 
         // Optional slug in kebab-case; must match domain Slug VO format if provided
         @Size(min = 1, max = 140)
-        @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$")
+        @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG)
         String slug,
 
         // Optional contact

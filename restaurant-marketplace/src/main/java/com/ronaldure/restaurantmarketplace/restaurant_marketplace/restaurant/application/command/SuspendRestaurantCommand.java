@@ -18,7 +18,7 @@ public record SuspendRestaurantCommand(
 
         // Optional slug target (kebab-case) if id is not provided
         @Size(min = 1, max = 140)
-        @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$")
+        @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG)
         String slug,
 
         // Optional reason for suspension (audit purposes)

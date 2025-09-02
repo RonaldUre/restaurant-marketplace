@@ -1,5 +1,7 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.model.vo;
 
+import java.util.Locale;
+
 /** Simple immutable address; keep nullables out by optional usage at aggregate level */
 public final class Address {
     private final String line1;
@@ -12,7 +14,7 @@ public final class Address {
         this.line1 = line1 == null ? null : line1.trim();
         this.line2 = line2 == null ? null : line2.trim();
         this.city = city == null ? null : city.trim();
-        this.country = country == null ? null : country.trim();
+        this.country = country == null ? null : country.trim().toUpperCase(Locale.ROOT);
         this.postalCode = postalCode == null ? null : postalCode.trim();
 
         if (this.line1 != null && this.line1.length() > 255) throw new IllegalArgumentException("line1 too long");

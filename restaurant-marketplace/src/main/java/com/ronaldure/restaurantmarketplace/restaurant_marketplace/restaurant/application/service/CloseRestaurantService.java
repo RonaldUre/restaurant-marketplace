@@ -41,7 +41,7 @@ public class CloseRestaurantService implements CloseRestaurantUseCase {
 
         // 2) Tenant context required
         Long tenantId = currentTenantProvider.currentTenantId()
-                .orElseThrow(ForbiddenOperationException::crossTenantAccess);
+                .orElseThrow(ForbiddenOperationException::tenantContextRequired);
 
         // 3) Load aggregate
         Restaurant restaurant = restaurantRepository.findById(tenantId)

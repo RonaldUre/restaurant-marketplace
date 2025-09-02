@@ -14,6 +14,7 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.lang.Nullable;
+import org.springframework.orm.ObjectOptimisticLockingFailureException;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
 import org.springframework.validation.FieldError;
@@ -35,9 +36,10 @@ import java.util.List;
  * Global HTTP exception mapper.
  *
  * Responsibilities:
- *  - Translate application/domain/infra exceptions to consistent HTTP error responses.
- *  - Never leak internal details (stacktraces, SQL, etc.) to clients.
- *  - Provide request path and (optional) traceId for observability.
+ * - Translate application/domain/infra exceptions to consistent HTTP error
+ * responses.
+ * - Never leak internal details (stacktraces, SQL, etc.) to clients.
+ * - Provide request path and (optional) traceId for observability.
  *
  * Error format is intentionally simple and stable across modules.
  */
@@ -48,19 +50,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(RestaurantNotFoundException.class)
     public ResponseEntity<ErrorResponse> handleRestaurantNotFound(RestaurantNotFoundException ex,
-                                                                  HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.NOT_FOUND, ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(SlugAlreadyInUseException.class)
     public ResponseEntity<ErrorResponse> handleSlugAlreadyInUse(SlugAlreadyInUseException ex,
-                                                                HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
     }
 
     @ExceptionHandler(ForbiddenOperationException.class)
     public ResponseEntity<ErrorResponse> handleForbiddenOperation(ForbiddenOperationException ex,
-                                                                  HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.FORBIDDEN, ex.getMessage(), req, null);
     }
 
@@ -69,7 +71,7 @@ public class GlobalExceptionHandler {
     /** Bean validation for @Valid @RequestBody. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
     public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-                                                                      HttpServletRequest req) {
+            HttpServletRequest req) {
         List<ValidationError> errors = new ArrayList<>();
         for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
             errors.add(new ValidationError(fe.getField(), safeMsg(fe.getDefaultMessage())));
@@ -77,10 +79,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.BAD_REQUEST, "Validation failed for request body", req, errors);
     }
 
-    /** Validation for method parameters (@RequestParam, @PathVariable) with @Validated. */
+    /**
+     * Validation for method parameters (@RequestParam, @PathVariable)
+     * with @Validated.
+     */
     @ExceptionHandler(ConstraintViolationException.class)
     public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
-                                                                   HttpServletRequest req) {
+            HttpServletRequest req) {
         List<ValidationError> errors = new ArrayList<>();
         for (ConstraintViolation<?> v : ex.getConstraintViolations()) {
             String field = v.getPropertyPath() == null ? null : v.getPropertyPath().toString();
@@ -92,7 +97,7 @@ public class GlobalExceptionHandler {
     /** Binding errors for @ModelAttribute or general binding failures. */
     @ExceptionHandler(BindException.class)
     public ResponseEntity<ErrorResponse> handleBindException(BindException ex,
-                                                             HttpServletRequest req) {
+            HttpServletRequest req) {
         List<ValidationError> errors = new ArrayList<>();
         for (FieldError fe : ex.getFieldErrors()) {
             errors.add(new ValidationError(fe.getField(), safeMsg(fe.getDefaultMessage())));
@@ -102,19 +107,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
     public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
-                                                            HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, "Missing request parameter: " + ex.getParameterName(), req, null);
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
     public ResponseEntity<ErrorResponse> handleMissingHeader(MissingRequestHeaderException ex,
-                                                             HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, "Missing request header: " + ex.getHeaderName(), req, null);
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
     public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
-                                                            HttpServletRequest req) {
+            HttpServletRequest req) {
         String name = ex.getName();
         String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
         String msg = "Parameter '" + name + "' has invalid value. Expected type: " + requiredType;
@@ -125,19 +130,19 @@ public class GlobalExceptionHandler {
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex,
-                                                           HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, "Malformed JSON request", req, null);
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMediaType(HttpMediaTypeNotSupportedException ex,
-                                                         HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported media type", req, null);
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
     public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
-                                                                  HttpServletRequest req) {
+            HttpServletRequest req) {
         HttpHeaders headers = new HttpHeaders();
         if (ex.getSupportedHttpMethods() != null) {
             for (HttpMethod m : ex.getSupportedHttpMethods()) {
@@ -147,22 +152,24 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(
                 errorBody(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed", req, null),
                 headers,
-                HttpStatus.METHOD_NOT_ALLOWED
-        );
+                HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
     public ResponseEntity<ErrorResponse> handleNoHandler(NoHandlerFoundException ex,
-                                                         HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.NOT_FOUND, "Endpoint not found", req, null);
     }
 
     // ---------- Data layer ----------
 
-    /** Generic DB constraint violations (e.g., unique indexes) not previously caught. */
+    /**
+     * Generic DB constraint violations (e.g., unique indexes) not previously
+     * caught.
+     */
     @ExceptionHandler(DataIntegrityViolationException.class)
     public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex,
-                                                             HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.CONFLICT, "Data integrity violation", req, null);
     }
 
@@ -171,7 +178,7 @@ public class GlobalExceptionHandler {
     /** Domain guardrails surfaced as IllegalArgumentException ⇒ 400 (bad input). */
     @ExceptionHandler(IllegalArgumentException.class)
     public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
-                                                               HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.BAD_REQUEST, safeMsg(ex.getMessage()), req, null);
     }
 
@@ -181,7 +188,7 @@ public class GlobalExceptionHandler {
      */
     @ExceptionHandler(IllegalStateException.class)
     public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex,
-                                                            HttpServletRequest req) {
+            HttpServletRequest req) {
         return build(HttpStatus.CONFLICT, safeMsg(ex.getMessage()), req, null);
     }
 
@@ -193,19 +200,25 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", req, null);
     }
 
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ErrorResponse> handleOptimistic(ObjectOptimisticLockingFailureException ex,
+            HttpServletRequest req) {
+        return build(HttpStatus.CONFLICT, "Concurrent modification", req, null);
+    }
+
     // ---------- Helpers ----------
 
     private ResponseEntity<ErrorResponse> build(HttpStatus status,
-                                                String message,
-                                                HttpServletRequest req,
-                                                @Nullable List<ValidationError> errors) {
+            String message,
+            HttpServletRequest req,
+            @Nullable List<ValidationError> errors) {
         return new ResponseEntity<>(errorBody(status, message, req, errors), status);
     }
 
     private ErrorResponse errorBody(HttpStatus status,
-                                    String message,
-                                    HttpServletRequest req,
-                                    @Nullable List<ValidationError> errors) {
+            String message,
+            HttpServletRequest req,
+            @Nullable List<ValidationError> errors) {
         String traceId = MDC.get("traceId"); // if you put traceId into MDC earlier (filter/interceptor)
         return new ErrorResponse(
                 status.value(),
@@ -214,12 +227,12 @@ public class GlobalExceptionHandler {
                 req != null ? req.getRequestURI() : null,
                 Instant.now().toString(),
                 traceId,
-                errors == null ? List.of() : errors
-        );
+                errors == null ? List.of() : errors);
     }
 
     private String safeMsg(@Nullable String msg) {
-        if (msg == null) return null;
+        if (msg == null)
+            return null;
         // Strip newlines or sensitive info if necessary (keep client payloads tidy)
         return msg.replaceAll("[\\r\\n]+", " ").trim();
     }
@@ -233,11 +246,11 @@ public class GlobalExceptionHandler {
             String path,
             String timestamp,
             String traceId,
-            List<ValidationError> errors
-    ) {}
+            List<ValidationError> errors) {
+    }
 
     public record ValidationError(
             @Nullable String field,
-            String message
-    ) {}
+            String message) {
+    }
 }

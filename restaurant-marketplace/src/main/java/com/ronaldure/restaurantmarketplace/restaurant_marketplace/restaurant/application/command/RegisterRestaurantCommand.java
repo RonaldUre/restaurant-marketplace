@@ -18,7 +18,7 @@ public record RegisterRestaurantCommand(
         // kebab-case, same format expected by domain Slug VO
         @NotBlank
         @Size(max = 140)
-        @Pattern(regexp = "^[a-z0-9]+(?:-[a-z0-9]+)*$")
+        @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG)
         String slug,
 
         // Optional contact info

@@ -48,7 +48,7 @@ public class UpdateRestaurantProfileService implements UpdateRestaurantProfileUs
 
         // 2) Tenant en contexto (obligatorio para admins)
         Long tenantId = currentTenantProvider.currentTenantId()
-                .orElseThrow(ForbiddenOperationException::crossTenantAccess);
+                .orElseThrow(ForbiddenOperationException::tenantContextRequired);
 
         // 3) Cargar el agregado por id = tenantId
         Restaurant restaurant = restaurantRepository.findById(tenantId)

@@ -2,7 +2,8 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors;
 
 /**
- * Thrown when the caller is authenticated but not authorized to perform the operation.
+ * Thrown when the caller is authenticated but not authorized to perform the
+ * operation.
  * Maps to HTTP 403 in the web layer.
  */
 public class ForbiddenOperationException extends RuntimeException {
@@ -17,5 +18,10 @@ public class ForbiddenOperationException extends RuntimeException {
 
     public static ForbiddenOperationException crossTenantAccess() {
         return new ForbiddenOperationException("Cross-tenant access is not allowed");
+    }
+
+    /** Thrown when an operation requires a tenant context but none is present. */
+    public static ForbiddenOperationException tenantContextRequired() {
+        return new ForbiddenOperationException("Tenant context is required");
     }
 }

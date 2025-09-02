@@ -3,9 +3,11 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.do
 import java.util.Objects;
 import java.util.regex.Pattern;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns;
+
 /** Optional email, but if present must be valid */
 public final class Email {
-    private static final Pattern P = Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]+$");
+    private static final Pattern P = Pattern.compile(Patterns.EMAIL);
     private final String value; // may be null? -> prefer absent by not creating instance when null
 
     private Email(String value) {

@@ -20,9 +20,9 @@ public class Restaurant {
     // Core profile
     private Name name;
     private Slug slug;
-    private Email email;          // optional (may be null)
-    private Phone phone;          // optional (may be null)
-    private Address address;      // optional (may be null)
+    private Email email; // optional (may be null)
+    private Phone phone; // optional (may be null)
+    private Address address; // optional (may be null)
     private OpeningHours openingHours; // optional (may be null)
 
     // Operational state
@@ -31,13 +31,13 @@ public class Restaurant {
     // -------- Constructors / Factories --------
 
     private Restaurant(RestaurantId id,
-                       Name name,
-                       Slug slug,
-                       Email email,
-                       Phone phone,
-                       Address address,
-                       OpeningHours openingHours,
-                       Status status) {
+            Name name,
+            Slug slug,
+            Email email,
+            Phone phone,
+            Address address,
+            OpeningHours openingHours,
+            Status status) {
         // Required
         this.id = id; // may be null on new aggregates
         this.name = Objects.requireNonNull(name, "name is required");
@@ -53,29 +53,31 @@ public class Restaurant {
         // Invariants that depend on multiple fields could go here if needed
     }
 
-    /** Factory for new Restaurants (pre-persistence, id not assigned yet). Defaults to CLOSED. */
+    /**
+     * Factory for new Restaurants (pre-persistence, id not assigned yet). Defaults
+     * to CLOSED.
+     */
     public static Restaurant create(Name name,
-                                    Slug slug,
-                                    Email email,
-                                    Phone phone,
-                                    Address address,
-                                    OpeningHours openingHours) {
+            Slug slug,
+            Email email,
+            Phone phone,
+            Address address,
+            OpeningHours openingHours) {
         return new Restaurant(
                 /* id */ null,
                 name, slug, email, phone, address, openingHours,
-                Status.CLOSED
-        );
+                Status.CLOSED);
     }
 
     /** Factory for rehydration (e.g., loading from repository). */
     public static Restaurant rehydrate(RestaurantId id,
-                                       Name name,
-                                       Slug slug,
-                                       Email email,
-                                       Phone phone,
-                                       Address address,
-                                       OpeningHours openingHours,
-                                       Status status) {
+            Name name,
+            Slug slug,
+            Email email,
+            Phone phone,
+            Address address,
+            OpeningHours openingHours,
+            Status status) {
         return new Restaurant(id, name, slug, email, phone, address, openingHours, status);
     }
 
@@ -84,37 +86,51 @@ public class Restaurant {
     /** Open restaurant if not suspended and not already open. */
     public void open() {
         ensureNotSuspended("Cannot open a suspended restaurant");
-        if (this.status == Status.OPEN) return; // idempotent
+        if (this.status == Status.OPEN)
+            return; // idempotent
         this.status = Status.OPEN;
     }
 
     /** Close restaurant if currently open. */
     public void close() {
-        if (this.status == Status.CLOSED) return; // idempotent
-        // Optional: if there are pending constraints (e.g., active orders) validate here
+        ensureNotSuspended("Cannot change state while restaurant is suspended");
+        if (this.status == Status.CLOSED)
+            return; // idempotent
+        // Optional: if there are pending constraints (e.g., active orders) validate
+        // here
         this.status = Status.CLOSED;
     }
 
     /** Suspend restaurant (platform-level action typically). */
     public void suspend() {
-        if (this.status == Status.SUSPENDED) return; // idempotent
+        if (this.status == Status.SUSPENDED)
+            return; // idempotent
         this.status = Status.SUSPENDED;
     }
 
-    /** Update basic profile fields (does not change status). Nulls mean "no change". */
+    /**
+     * Update basic profile fields (does not change status). Nulls mean "no change".
+     */
     public void updateProfile(Name name,
-                              Slug slug,
-                              Email email,
-                              Phone phone,
-                              Address address,
-                              OpeningHours openingHours) {
+            Slug slug,
+            Email email,
+            Phone phone,
+            Address address,
+            OpeningHours openingHours) {
         // Only apply provided fields; VOs already validated
-        if (name != null) this.name = name;
-        if (slug != null) this.slug = slug;
-        if (email != null) this.email = email;
-        if (phone != null) this.phone = phone;
-        if (address != null) this.address = address;
-        if (openingHours != null) this.openingHours = openingHours;
+        ensureNotSuspended("Cannot update profile while restaurant is suspended");
+        if (name != null)
+            this.name = name;
+        if (slug != null)
+            this.slug = slug;
+        if (email != null)
+            this.email = email;
+        if (phone != null)
+            this.phone = phone;
+        if (address != null)
+            this.address = address;
+        if (openingHours != null)
+            this.openingHours = openingHours;
     }
 
     // -------- Guards --------
@@ -127,20 +143,47 @@ public class Restaurant {
 
     // -------- Getters (no setters; mutate through behavior) --------
 
-    public RestaurantId id() { return id; }
-    /** Assign id after persistence (adapter-level). Keep package-private to avoid misuse. */
+    public RestaurantId id() {
+        return id;
+    }
+
+    /**
+     * Assign id after persistence (adapter-level). Keep package-private to avoid
+     * misuse.
+     */
     void assignId(RestaurantId id) {
-        if (this.id != null) throw new IllegalStateException("id already assigned");
+        if (this.id != null)
+            throw new IllegalStateException("id already assigned");
         this.id = Objects.requireNonNull(id, "id cannot be null");
     }
 
-    public Name name() { return name; }
-    public Slug slug() { return slug; }
-    public Email email() { return email; }
-    public Phone phone() { return phone; }
-    public Address address() { return address; }
-    public OpeningHours openingHours() { return openingHours; }
-    public Status status() { return status; }
+    public Name name() {
+        return name;
+    }
+
+    public Slug slug() {
+        return slug;
+    }
+
+    public Email email() {
+        return email;
+    }
+
+    public Phone phone() {
+        return phone;
+    }
+
+    public Address address() {
+        return address;
+    }
+
+    public OpeningHours openingHours() {
+        return openingHours;
+    }
+
+    public Status status() {
+        return status;
+    }
 
     // -------- Optional: domain events hooks (future) --------
     // e.g., recordEvent(new RestaurantOpenedEvent(this.id));

@@ -32,8 +32,7 @@ public class RestaurantApplicationMapper {
         String openingHoursJson = unwrap(restaurant.openingHours());
 
         return new RestaurantView(
-                id, name, slug, status, email, phone, address, openingHoursJson
-        );
+                id, name, slug, status, email, phone, address, openingHoursJson);
     }
 
     // ---------- Helpers (VO unwrapping) ----------
@@ -55,13 +54,20 @@ public class RestaurantApplicationMapper {
     }
 
     private RestaurantView.AddressView toAddressView(Address a) {
-        if (a == null) return null;
+        if (a == null)
+            return null;
+        boolean empty = a.line1() == null
+                && a.line2() == null
+                && a.city() == null
+                && a.country() == null
+                && a.postalCode() == null;
+        if (empty)
+            return null;
         return new RestaurantView.AddressView(
                 a.line1(),
                 a.line2(),
                 a.city(),
                 a.country(),
-                a.postalCode()
-        );
+                a.postalCode());
     }
 }

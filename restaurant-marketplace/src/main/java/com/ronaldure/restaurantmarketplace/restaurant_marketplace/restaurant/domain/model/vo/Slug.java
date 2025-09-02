@@ -2,10 +2,11 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.do
 
 import java.util.Objects;
 import java.util.regex.Pattern;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns;
 
 /** URL-friendly unique slug */
 public final class Slug {
-    private static final Pattern P = Pattern.compile("^[a-z0-9]+(?:-[a-z0-9]+)*$"); // kebab-case
+    private static final Pattern P = Pattern.compile(Patterns.SLUG); // kebab-case // kebab-case
     private final String value;
 
     private Slug(String value) {
