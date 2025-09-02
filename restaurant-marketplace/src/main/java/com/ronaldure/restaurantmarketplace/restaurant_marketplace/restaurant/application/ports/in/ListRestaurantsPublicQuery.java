@@ -3,22 +3,15 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.ap
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.ListRestaurantsPublicQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantCardView;
-
-import java.util.List;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 
 /**
- * IN port to list restaurants for public marketplace browsing.
- *
- * Transactional: no (read-only).
- * Authorization: none (public).
- * Multitenancy: none (global view, tenantId not required).
- *
- * Optimized for lightweight "cards" (id, name, slug, status, city).
+ * IN port para listar restaurantes públicos con paginación completa.
  */
 public interface ListRestaurantsPublicQuery {
 
     /**
-     * Returns a paginated list of restaurant cards.
+     * Devuelve items + totalElements + totalPages.
      */
-    List<RestaurantCardView> list(ListRestaurantsPublicQueryParams params);
+    PageResponse<RestaurantCardView> list(ListRestaurantsPublicQueryParams params);
 }
