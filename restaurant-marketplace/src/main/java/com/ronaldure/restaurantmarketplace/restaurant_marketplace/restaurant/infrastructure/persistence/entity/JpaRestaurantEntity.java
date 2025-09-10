@@ -80,7 +80,7 @@ public class JpaRestaurantEntity {
     private Instant createdAt;
 
     // -------- Constructors --------
-    protected JpaRestaurantEntity() {
+    public JpaRestaurantEntity() {
         // for JPA
     }
 

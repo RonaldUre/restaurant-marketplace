@@ -32,7 +32,7 @@ public interface PublicRestaurantJpaRepository extends JpaRepository<JpaRestaura
                    r.city as city, r.country as country, r.postalCode as postalCode,
                    r.openingHoursJson as openingHoursJson
             from JpaRestaurantEntity r
-            where r.status in ('OPEN','CLOSED') -- detalle visible público; si prefieres solo OPEN, cambia aquí
+            where r.status in ('OPEN','CLOSED') 
               and r.slug = :slug
             """)
     Optional<PublicRestaurantDetailProjection> getDetailBySlug(String slug);

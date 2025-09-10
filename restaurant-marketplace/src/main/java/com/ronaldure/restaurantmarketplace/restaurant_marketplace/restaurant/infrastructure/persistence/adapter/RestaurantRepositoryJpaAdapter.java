@@ -34,15 +34,72 @@ public class RestaurantRepositoryJpaAdapter implements RestaurantRepository {
         return jpaRepository.existsBySlug(slug);
     }
 
-    // -------- Save --------
+    // -------- Save (MODIFICADO) --------
     @Override
     public Restaurant save(Restaurant restaurant) {
-        JpaRestaurantEntity entity = toEntity(restaurant);
-        JpaRestaurantEntity saved = jpaRepository.save(entity);
-        return toDomain(saved); // devolver agregado con ID asignado
+        JpaRestaurantEntity jpaEntity;
+
+        if (restaurant.id() == null) {
+            // Caso: Nuevo Restaurante (flujo de registro)
+            // Creamos una nueva entidad JPA. JPA le asignará ID y Version al persistir.
+            jpaEntity = new JpaRestaurantEntity();
+            mapDomainToEntity(restaurant, jpaEntity); // Mapeamos los campos del dominio a la nueva entidad
+        } else {
+            // Caso: Restaurante existente (flujo de actualización, abrir, cerrar, suspender)
+            // Cargamos la entidad existente desde la base de datos.
+            // Esto asegura que la entidad esté "gestionada" por JPA y tenga su valor de version.
+            jpaEntity = jpaRepository.findById(restaurant.id().value())
+                    .orElseThrow(() -> new IllegalStateException("Restaurant entity not found for id: " + restaurant.id().value()));
+
+            // Actualizamos los campos de la entidad cargada con los valores del objeto de dominio.
+            mapDomainToEntity(restaurant, jpaEntity);
+            // JPA automáticamente gestionará el campo 'version' al guardar.
+        }
+
+        // Guardar la entidad. Si es nueva, JPA asigna ID y version.
+        // Si es existente, JPA actualiza y incrementa la version.
+        JpaRestaurantEntity savedEntity = jpaRepository.save(jpaEntity);
+
+        // Volvemos a mapear la entidad guardada al objeto de dominio para devolver
+        // el agregado con el ID (si era nuevo) y el estado actualizado.
+        return toDomain(savedEntity);
     }
 
-    // -------- Mapping: JPA -> Domain --------
+    // -------- Helper para mapear Domain -> JPA (reemplaza el constructor directo para actualizaciones) --------
+    private void mapDomainToEntity(Restaurant domainRestaurant, JpaRestaurantEntity jpaEntity) {
+        // Id will be set by JPA on initial save, or already exists on loaded entity
+        // jpaEntity.setId(domainRestaurant.id() != null ? domainRestaurant.id().value() : null); // No seteamos el ID aquí, JPA lo gestiona
+
+        jpaEntity.setName(domainRestaurant.name().value());
+        jpaEntity.setSlug(domainRestaurant.slug().value());
+        jpaEntity.setStatus(domainRestaurant.status().name());
+
+        jpaEntity.setEmail(domainRestaurant.email() != null ? domainRestaurant.email().value() : null);
+        jpaEntity.setPhone(domainRestaurant.phone() != null ? domainRestaurant.phone().value() : null);
+
+        // Address fields
+        if (domainRestaurant.address() != null) {
+            jpaEntity.setAddressLine1(domainRestaurant.address().line1());
+            jpaEntity.setAddressLine2(domainRestaurant.address().line2());
+            jpaEntity.setCity(domainRestaurant.address().city());
+            jpaEntity.setCountry(domainRestaurant.address().country());
+            jpaEntity.setPostalCode(domainRestaurant.address().postalCode());
+        } else {
+            // If address is null in domain, ensure address fields are null in entity
+            jpaEntity.setAddressLine1(null);
+            jpaEntity.setAddressLine2(null);
+            jpaEntity.setCity(null);
+            jpaEntity.setCountry(null);
+            jpaEntity.setPostalCode(null);
+        }
+
+        jpaEntity.setOpeningHoursJson(domainRestaurant.openingHours() != null ? domainRestaurant.openingHours().json() : null);
+        // El campo 'version' lo gestiona JPA automáticamente.
+        // El campo 'createdAt' lo gestiona @CreationTimestamp.
+    }
+
+
+    // -------- Mapping: JPA -> Domain (SIN CAMBIOS) --------
     private Restaurant toDomain(JpaRestaurantEntity e) {
         return Restaurant.rehydrate(
                 e.getId() != null ? RestaurantId.of(e.getId()) : null,
@@ -53,24 +110,6 @@ public class RestaurantRepositoryJpaAdapter implements RestaurantRepository {
                 Address.of(e.getAddressLine1(), e.getAddressLine2(), e.getCity(), e.getCountry(), e.getPostalCode()),
                 e.getOpeningHoursJson() != null ? OpeningHours.of(e.getOpeningHoursJson()) : null,
                 Status.valueOf(e.getStatus())
-        );
-    }
-
-    // -------- Mapping: Domain -> JPA --------
-    private JpaRestaurantEntity toEntity(Restaurant r) {
-        return new JpaRestaurantEntity(
-                r.id() != null ? r.id().value() : null,
-                r.name() != null ? r.name().value() : null,
-                r.slug() != null ? r.slug().value() : null,
-                r.status() != null ? r.status().name() : null,
-                r.email() != null ? r.email().value() : null,
-                r.phone() != null ? r.phone().value() : null,
-                r.address() != null ? r.address().line1() : null,
-                r.address() != null ? r.address().line2() : null,
-                r.address() != null ? r.address().city() : null,
-                r.address() != null ? r.address().country() : null,
-                r.address() != null ? r.address().postalCode() : null,
-                r.openingHours() != null ? r.openingHours().json() : null
         );
     }
 }
