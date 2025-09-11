@@ -3,14 +3,17 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infras
 public class TokenResponse {
     private String tokenType = "Bearer";
     private String accessToken;
-    private long expiresInSeconds;
+    private long accessExpiresInSeconds;
+    private String refreshToken;
 
-    public TokenResponse(String accessToken, long expiresInSeconds) {
+    public TokenResponse(String accessToken, long accessExpiresInSeconds, String refreshToken) {
         this.accessToken = accessToken;
-        this.expiresInSeconds = expiresInSeconds;
+        this.accessExpiresInSeconds = accessExpiresInSeconds;
+        this.refreshToken = refreshToken;
     }
 
     public String getTokenType() { return tokenType; }
     public String getAccessToken() { return accessToken; }
-    public long getExpiresInSeconds() { return expiresInSeconds; }
+    public long getAccessExpiresInSeconds() { return accessExpiresInSeconds; }
+    public String getRefreshToken() { return refreshToken; }
 }

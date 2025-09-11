@@ -38,5 +38,50 @@
     "name": "security.cors.allowed-headers",
     "type": "java.lang.String",
     "description": "A description for 'security.cors.allowed-headers'"
+  },
+  {
+    "name": "jobs.scheduling.enabled",
+    "type": "java.lang.String",
+    "description": "A description for 'jobs.scheduling.enabled'"
+  },
+  {
+    "name": "jobs.refresh-token-cleanup.enabled",
+    "type": "java.lang.String",
+    "description": "A description for 'jobs.refresh-token-cleanup.enabled'"
+  },
+  {
+    "name": "jobs.refresh-token-cleanup.retention-days",
+    "type": "java.lang.String",
+    "description": "A description for 'jobs.refresh-token-cleanup.retention-days'"
+  },
+  {
+    "name": "jobs.refresh-token-cleanup.cron",
+    "type": "java.lang.String",
+    "description": "A description for 'jobs.refresh-token-cleanup.cron'"
+  },
+  {
+    "name": "jobs.refresh-token-cleanup.batch-size",
+    "type": "java.lang.String",
+    "description": "A description for 'jobs.refresh-token-cleanup.batch-size'"
+  },
+  {
+    "name": "jwt.clockSkewSeconds",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.clockSkewSeconds'"
+  },
+  {
+    "name": "jwt.accessTokenTtlMinutes",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.accessTokenTtlMinutes'"
+  },
+  {
+    "name": "jwt.clockSkewSeconds",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.clockSkewSeconds'"
+  },
+  {
+    "name": "jwt.accessTokenTtlMinutes",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.accessTokenTtlMinutes'"
   }
 ]}

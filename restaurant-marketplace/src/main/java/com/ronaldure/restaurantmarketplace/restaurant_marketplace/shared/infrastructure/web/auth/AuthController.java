@@ -1,25 +1,71 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.auth;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.security.RefreshTokenService;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.auth.dto.LoginRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.auth.dto.RefreshRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.auth.dto.TokenResponse;
+import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@RequestMapping("/auth/login")
+@RequestMapping("/auth")
 public class AuthController {
 
     private final AuthService auth;
+    private final RefreshTokenService refreshTokens;
 
-    public AuthController(AuthService auth) {
+    public AuthController(AuthService auth, RefreshTokenService refreshTokens) {
         this.auth = auth;
+        this.refreshTokens = refreshTokens;
     }
 
-    /** Admin/Platform login: RESTAURANT_ADMIN (with tenantId) or SUPER_ADMIN (without tenantId). */
-    @PostMapping("/admin")
-    public ResponseEntity<TokenResponse> adminLogin(@Valid @RequestBody LoginRequest request) {
-        String token = auth.loginAdmin(request.getEmail(), request.getPassword());
-        return ResponseEntity.ok(new TokenResponse(token, auth.getTtlSeconds()));
+    /** Admin/Platform login: RESTAURANT_ADMIN (con tenantId) o SUPER_ADMIN (sin tenantId). */
+    @PostMapping("/login/admin")
+    public ResponseEntity<TokenResponse> adminLogin(@Valid @RequestBody LoginRequest request,
+                                                    HttpServletRequest http) {
+        String ip = clientIp(http);
+        String ua = userAgent(http);
+
+        var res = auth.loginAdmin(request.getEmail(), request.getPassword(), ip, ua);
+        return ResponseEntity.ok(new TokenResponse(
+                res.accessToken(),
+                res.accessTtlSeconds(),
+                res.refreshToken()
+        ));
+    }
+
+    /** Intercambia un refresh token válido por un nuevo access + refresh (rotación obligatoria). */
+    @PostMapping("/refresh")
+    public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request,
+                                                 HttpServletRequest http) {
+        String ip = clientIp(http);
+        String ua = userAgent(http);
+
+        var pair = refreshTokens.rotate(request.getRefreshToken(), ip, ua);
+        // TTL del access no cambia aquí; usamos el mismo configurado en AuthService
+        long accessTtl = auth.getTtlSeconds();
+
+        return ResponseEntity.ok(new TokenResponse(
+                pair.accessToken(),
+                accessTtl,
+                pair.refreshToken()
+        ));
+    }
+
+    // -------- helpers ----------
+    private String clientIp(HttpServletRequest http) {
+        String h = http.getHeader("X-Forwarded-For");
+        if (h != null && !h.isBlank()) {
+            int comma = h.indexOf(',');
+            return comma > 0 ? h.substring(0, comma).trim() : h.trim();
+        }
+        return http.getRemoteAddr();
+    }
+
+    private String userAgent(HttpServletRequest http) {
+        String ua = http.getHeader("User-Agent");
+        return (ua == null || ua.isBlank()) ? "unknown" : ua;
     }
 }

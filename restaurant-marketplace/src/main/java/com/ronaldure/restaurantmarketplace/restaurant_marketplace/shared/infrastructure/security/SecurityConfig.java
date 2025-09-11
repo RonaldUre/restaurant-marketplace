@@ -50,6 +50,7 @@ public class SecurityConfig {
             .authorizeHttpRequests(auth -> auth
                 // Login endpoints
                 .requestMatchers("/auth/login/**").permitAll()
+                .requestMatchers("/auth/refresh").permitAll()
                 // Public read
                 .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
                 // Orders for customers
