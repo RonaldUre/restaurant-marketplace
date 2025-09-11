@@ -51,6 +51,7 @@ public class SecurityConfig {
                 // Login endpoints
                 .requestMatchers("/auth/login/**").permitAll()
                 .requestMatchers("/auth/refresh").permitAll()
+                .requestMatchers("/auth/logout").permitAll() 
                 // Public read
                 .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
                 // Orders for customers

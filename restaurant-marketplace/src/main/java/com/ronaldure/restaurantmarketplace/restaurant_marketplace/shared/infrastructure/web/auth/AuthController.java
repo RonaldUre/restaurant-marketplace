@@ -21,10 +21,13 @@ public class AuthController {
         this.refreshTokens = refreshTokens;
     }
 
-    /** Admin/Platform login: RESTAURANT_ADMIN (con tenantId) o SUPER_ADMIN (sin tenantId). */
+    /**
+     * Admin/Platform login: RESTAURANT_ADMIN (con tenantId) o SUPER_ADMIN (sin
+     * tenantId).
+     */
     @PostMapping("/login/admin")
     public ResponseEntity<TokenResponse> adminLogin(@Valid @RequestBody LoginRequest request,
-                                                    HttpServletRequest http) {
+            HttpServletRequest http) {
         String ip = clientIp(http);
         String ua = userAgent(http);
 
@@ -32,14 +35,16 @@ public class AuthController {
         return ResponseEntity.ok(new TokenResponse(
                 res.accessToken(),
                 res.accessTtlSeconds(),
-                res.refreshToken()
-        ));
+                res.refreshToken()));
     }
 
-    /** Intercambia un refresh token válido por un nuevo access + refresh (rotación obligatoria). */
+    /**
+     * Intercambia un refresh token válido por un nuevo access + refresh (rotación
+     * obligatoria).
+     */
     @PostMapping("/refresh")
     public ResponseEntity<TokenResponse> refresh(@Valid @RequestBody RefreshRequest request,
-                                                 HttpServletRequest http) {
+            HttpServletRequest http) {
         String ip = clientIp(http);
         String ua = userAgent(http);
 
@@ -50,8 +55,19 @@ public class AuthController {
         return ResponseEntity.ok(new TokenResponse(
                 pair.accessToken(),
                 accessTtl,
-                pair.refreshToken()
-        ));
+                pair.refreshToken()));
+    }
+
+    /**
+     * Logout por refresh token. Revoca el RT suministrado.
+     * Si ?all=true, revoca todas las sesiones del usuario.
+     * Respuesta: 204 No Content (idempotente).
+     */
+    @PostMapping("/logout")
+    public ResponseEntity<Void> logout(@Valid @RequestBody RefreshRequest request,
+            @RequestParam(name = "all", defaultValue = "false") boolean all) {
+        refreshTokens.logout(request.getRefreshToken(), all);
+        return ResponseEntity.noContent().build();
     }
 
     // -------- helpers ----------

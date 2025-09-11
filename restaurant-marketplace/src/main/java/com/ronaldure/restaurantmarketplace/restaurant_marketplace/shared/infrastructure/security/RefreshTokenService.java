@@ -24,12 +24,13 @@ public class RefreshTokenService {
 
     private final JwtTokenGenerator accessTokenGenerator; // reusa tu generador de access tokens
 
-    public record TokensPair(String accessToken, String refreshToken) {}
+    public record TokensPair(String accessToken, String refreshToken) {
+    }
 
     public RefreshTokenService(RefreshTokenCodec refreshCodec,
-                               RefreshTokenJpaRepository refreshRepo,
-                               UserAuthJpaRepository usersRepo,
-                               JwtTokenGenerator accessTokenGenerator) {
+            RefreshTokenJpaRepository refreshRepo,
+            UserAuthJpaRepository usersRepo,
+            JwtTokenGenerator accessTokenGenerator) {
         this.refreshCodec = refreshCodec;
         this.refreshRepo = refreshRepo;
         this.accessTokenGenerator = accessTokenGenerator;
@@ -60,7 +61,9 @@ public class RefreshTokenService {
         return new TokensPair(access, refresh);
     }
 
-    /** Rota un refresh válido ⇒ devuelve nuevo access + nuevo refresh. Maneja reuso. */
+    /**
+     * Rota un refresh válido ⇒ devuelve nuevo access + nuevo refresh. Maneja reuso.
+     */
     @Transactional
     public TokensPair rotate(String rawRefresh, String ip, String userAgent) {
         var claims = refreshCodec.parseAndValidate(rawRefresh);
@@ -84,7 +87,8 @@ public class RefreshTokenService {
 
         // Expiración y estado
         if (row.isRevoked() || row.getReplacedByJti() != null) {
-            // REUSO detectado ⇒ revocar todos los RT activos del usuario (política simple y efectiva)
+            // REUSO detectado ⇒ revocar todos los RT activos del usuario (política simple y
+            // efectiva)
             revokeAllActiveForUser(userId);
             throw new SecurityException("Refresh reuse detected; all sessions revoked");
         }
@@ -94,11 +98,13 @@ public class RefreshTokenService {
 
         // Roles y tenant desde claims (los metimos en el refresh)
         Set<Role> roles = EnumSet.noneOf(Role.class);
-        for (String r : claims.roles()) roles.add(Role.valueOf(r));
+        for (String r : claims.roles())
+            roles.add(Role.valueOf(r));
         Long tenantId = null;
         try {
             tenantId = claims.tenantId();
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+        }
 
         // 1) Generar nuevo refresh con nuevo jti
         String newJti = UUID.randomUUID().toString();
@@ -147,6 +153,52 @@ public class RefreshTokenService {
             return parsed.getJWTClaimsSet().getExpirationTime().toInstant();
         } catch (Exception e) {
             throw new IllegalStateException("Cannot read exp from JWT", e);
+        }
+    }
+
+    @Transactional
+    public void logout(String rawRefresh, boolean revokeAllSessions) {
+        // 0) Parsear claims; si es inválido/expirado, consideramos logout como éxito
+        // (idempotente)
+        RefreshTokenCodec.RefreshClaims claims;
+        try {
+            claims = refreshCodec.parseAndValidate(rawRefresh);
+        } catch (SecurityException ex) {
+            // Token inválido/expirado: no hay nada que revocar en BD => idempotente
+            return;
+        }
+
+        Long userId = Long.parseLong(claims.userId());
+        String jti = claims.jti();
+
+        var rowOpt = refreshRepo.findByJti(jti);
+        if (rowOpt.isEmpty()) {
+            // No existe en BD (ej: ya limpiado o nunca se guardó) => idempotente
+            return;
+        }
+
+        var row = rowOpt.get();
+
+        // Defensa contra confusión: comparamos hash exacto
+        String incomingHash = Sha256.hex(rawRefresh);
+        if (!Objects.equals(row.getTokenHash(), incomingHash)) {
+            // Token no coincide con el hash registrado => tratar como no-op idempotente
+            return;
+        }
+
+        // Si ya está revocado/rotado, no hacer nada (idempotente)
+        if (row.isRevoked() || row.getReplacedByJti() != null) {
+            return;
+        }
+
+        if (revokeAllSessions) {
+            // Revoca todo para el usuario (cierra todas las sesiones)
+            revokeAllActiveForUser(userId);
+        } else {
+            // Solo este refresh
+            row.setRevoked(true);
+            row.setReplacedByJti(null);
+            refreshRepo.save(row);
         }
     }
 }
