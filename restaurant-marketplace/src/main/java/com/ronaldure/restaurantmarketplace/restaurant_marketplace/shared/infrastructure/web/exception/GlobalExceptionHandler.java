@@ -66,6 +66,13 @@ public class GlobalExceptionHandler {
         return build(HttpStatus.FORBIDDEN, ex.getMessage(), req, null);
     }
 
+    @ExceptionHandler(SecurityException.class)
+    public ResponseEntity<ErrorResponse> handleSecurity(SecurityException ex, HttpServletRequest req) {
+        // No filtramos el mensaje interno para el cliente; mantenemos respuesta
+        // estable.
+        return build(HttpStatus.UNAUTHORIZED, "Invalid or expired credentials", req, null);
+    }
+
     // ---------- Validation & binding ----------
 
     /** Bean validation for @Valid @RequestBody. */

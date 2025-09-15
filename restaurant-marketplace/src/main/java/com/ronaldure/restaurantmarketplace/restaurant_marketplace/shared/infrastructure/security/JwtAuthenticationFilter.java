@@ -20,7 +20,6 @@ import java.util.stream.Collectors;
 
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
-
     private final TokenDecoder tokenDecoder;
 
     public JwtAuthenticationFilter(TokenDecoder tokenDecoder) {
@@ -29,79 +28,77 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
     @Override
     protected void doFilterInternal(HttpServletRequest request,
-                                    HttpServletResponse response,
-                                    FilterChain filterChain) throws ServletException, IOException {
-        String uri = request.getRequestURI();
-        String header = request.getHeader(HttpHeaders.AUTHORIZATION);
-        boolean hasBearer = header != null && header.startsWith("Bearer ");
+            HttpServletResponse response,
+            FilterChain filterChain) throws ServletException, IOException {
+        final String uri = request.getRequestURI();
+        final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
+        final boolean hasBearer = header != null && header.startsWith("Bearer ");
 
         try {
             if (!hasBearer) {
-                // No token: continue (public routes will be permitAll, others will be rejected by authorization)
+                // sin token: continúa (permitAll/deny lo decidirá la capa de autorización)
                 filterChain.doFilter(request, response);
                 return;
             }
 
-            String raw = header.substring("Bearer ".length()).trim();
-            AuthenticatedUser user = tokenDecoder.decode(raw);
+            final String raw = header.substring("Bearer ".length()).trim();
+            final AuthenticatedUser user = tokenDecoder.decode(raw);
 
-            // Enforce path-specific tenant/role invariants BEFORE building auth
+            // Enforce invariants per path
             if (isAdminPath(uri)) {
-                // admin requires tenantId
                 if (user.tenantId().isEmpty()) {
                     forbidden(response, "Admin route requires tenantId in JWT");
                     return;
                 }
-                // Set TenantContext from JWT (ignore any request param/header).
-                TenantContext.set(user.userId(), parseTenantId(user));
+                TenantContext.set(user.userId(), parseTenantIdOrThrow(user));
             } else if (isPlatformPath(uri)) {
-                // platform requires SUPER_ADMIN and must not set tenant
                 if (!user.isSuperAdmin()) {
                     forbidden(response, "SUPER_ADMIN role required");
                     return;
                 }
-                // Do NOT set tenant in platform
                 TenantContext.set(user.userId(), null);
             } else {
-                // public or customer routes: do not set tenant
+                // público/customer: no setear tenant
                 TenantContext.set(user.userId(), null);
             }
 
-            // Build Spring Authentication with ROLE_ authorities
+            // Construye Authentication con authorities ROLE_*
             Set<SimpleGrantedAuthority> authorities = user.roles().stream()
                     .map(Role::name)
                     .map(r -> new SimpleGrantedAuthority("ROLE_" + r))
                     .collect(Collectors.toSet());
 
-            AbstractAuthenticationToken authentication =
-                    new UsernamePasswordAuthenticationToken(user, null, authorities);
+            AbstractAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(user, null,
+                    authorities);
 
             org.springframework.security.core.context.SecurityContextHolder.getContext()
                     .setAuthentication(authentication);
 
             filterChain.doFilter(request, response);
-        } catch (SecurityException ex) {
-            unauthorized(response, ex.getMessage());
+
+        } catch (SecurityException se) {
+            // Cualquier problema de firma/claims/exp/tenantId inválido ⇒ 401
+            unauthorized(response, se.getMessage());
+            return;
+        } catch (RuntimeException re) {
+            // Parseos fuera del decoder, etc. ⇒ 401 genérico
+            unauthorized(response, "Invalid token");
+            return;
         } finally {
-            // Always clear per-request context
+            // Limpia SIEMPRE el contexto de tenant por request
             TenantContext.clear();
-            org.springframework.security.core.context.SecurityContextHolder.clearContext();
+            // Importante: NO limpiar SecurityContext aquí; lo maneja Spring Security.
         }
     }
 
     private boolean isAdminPath(String uri) {
-        return uri.startsWith("/admin/");
+        return "/admin".equals(uri) || uri.startsWith("/admin/");
     }
 
     private boolean isPlatformPath(String uri) {
-        return uri.startsWith("/platform/");
+        return "/platform".equals(uri) || uri.startsWith("/platform/");
     }
-
-    private Long parseTenantId(AuthenticatedUser user) {
-        // Our AuthenticatedUser stores TenantId as VO with string value; convert to Long here for TenantContext
-        return user.tenantId().map(t -> Long.parseLong(t.value())).orElse(null);
-    }
-
+    
     private void unauthorized(HttpServletResponse response, String msg) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
@@ -117,4 +114,17 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String sanitize(String in) {
         return in == null ? "" : in.replace("\"", "'");
     }
+
+    private Long parseTenantIdOrThrow(AuthenticatedUser user) {
+        return user.tenantId()
+                .map(t -> {
+                    try {
+                        return Long.parseLong(t.value());
+                    } catch (NumberFormatException ex) {
+                        throw new SecurityException("Invalid tenantId");
+                    }
+                })
+                .orElse(null);
+    }
+
 }

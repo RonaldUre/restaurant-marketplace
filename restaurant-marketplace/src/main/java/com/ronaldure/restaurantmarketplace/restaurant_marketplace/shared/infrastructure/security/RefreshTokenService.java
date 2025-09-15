@@ -71,7 +71,7 @@ public class RefreshTokenService {
         Long userId = Long.parseLong(claims.userId());
         String jti = claims.jti();
 
-        var rowOpt = refreshRepo.findByJti(jti);
+        var rowOpt = refreshRepo.findByJtiWithPessimisticLock(jti);
         if (rowOpt.isEmpty()) {
             // Desconocido en BD: puede ser robado o viejo ⇒ denegar.
             throw new SecurityException("Refresh not recognized");
