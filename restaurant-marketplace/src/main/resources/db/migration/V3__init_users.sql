@@ -11,7 +11,7 @@ CREATE INDEX idx_users_role ON users(role);
 CREATE INDEX idx_users_tenant ON users(tenant_id);
 
 -- Optional seed for local dev (use real BCrypt hashes):
--- password = "admin123"
+-- password = "123456"
 INSERT INTO users (email, password_hash, role, tenant_id) VALUES
-('admin@resto.example', '$2a$10$w7pg9YV3wJrK0f5aC0o8E.2C5H6h0q3y5mD7O2z0i2r3v8pQy1jD6', 'RESTAURANT_ADMIN', 1),
-('super@platform.example', '$2a$10$w7pg9YV3wJrK0f5aC0o8E.2C5H6h0q3y5mD7O2z0i2r3v8pQy1jD6', 'SUPER_ADMIN', NULL);
+('admin@resto.example', '$2a$10$8uF57oOnSQefZd1jrko5YeGxbXev4MZbhjKcmgwZyTY9cFMd8Q3eS', 'RESTAURANT_ADMIN', 1),
+('super@platform.example', '$2a$10$8uF57oOnSQefZd1jrko5YeGxbXev4MZbhjKcmgwZyTY9cFMd8Q3eS', 'SUPER_ADMIN', NULL);
