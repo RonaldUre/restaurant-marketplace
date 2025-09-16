@@ -5,7 +5,6 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UpdateRestaurantProfileCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.model.vo.*;
-
 import org.springframework.stereotype.Component;
 
 /**
@@ -51,6 +50,7 @@ public class RestaurantFactory {
     /**
      * Produce a partial payload of VOs from UpdateRestaurantProfileCommand.
      * Null fields mean "no change" and should be passed as null to the aggregate.
+     * Address is now nested; if provided parcialmente, el agregado hace merge campo a campo.
      */
     public UpdatePayload from(UpdateRestaurantProfileCommand c) {
         Name name = c.name() == null ? null : Name.of(c.name());
@@ -58,9 +58,17 @@ public class RestaurantFactory {
         Email email = c.email() == null ? null : Email.of(c.email());
         Phone phone = c.phone() == null ? null : Phone.of(c.phone());
 
-        Address address = anyAddressFieldPresent(c)
-                ? Address.of(c.addressLine1(), c.addressLine2(), c.city(), c.country(), c.postalCode())
-                : null;
+        Address address = null;
+        if (anyAddressFieldPresent(c.address())) {
+            var a = c.address();
+            address = Address.of(
+                    a.line1(),
+                    a.line2(),
+                    a.city(),
+                    a.country(),
+                    a.postalCode()
+            );
+        }
 
         OpeningHours openingHours = c.openingHoursJson() == null ? null : OpeningHours.of(c.openingHoursJson());
 
@@ -72,12 +80,13 @@ public class RestaurantFactory {
 
     // ---------- Helpers ----------
 
-    private boolean anyAddressFieldPresent(UpdateRestaurantProfileCommand c) {
-        return c.addressLine1() != null
-                || c.addressLine2() != null
-                || c.city() != null
-                || c.country() != null
-                || c.postalCode() != null;
+    private boolean anyAddressFieldPresent(UpdateRestaurantProfileCommand.AddressPayload a) {
+        if (a == null) return false;
+        return a.line1() != null
+                || a.line2() != null
+                || a.city() != null
+                || a.country() != null
+                || a.postalCode() != null;
     }
 
     /**
