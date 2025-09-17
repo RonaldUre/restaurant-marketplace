@@ -48,4 +48,6 @@ public interface PublicRestaurantJpaRepository extends JpaRepository<JpaRestaura
               and r.id = :id
             """)
     Optional<PublicRestaurantDetailProjection> getDetailById(Long id);
+
+    boolean existsBySlug(String slug);
 }

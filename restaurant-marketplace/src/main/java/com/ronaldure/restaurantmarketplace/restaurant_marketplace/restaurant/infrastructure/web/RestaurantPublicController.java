@@ -1,12 +1,14 @@
 // src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/restaurant/infrastructure/web/RestaurantPublicController.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.CheckSlugAvailabilityQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.GetRestaurantPublicQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.ListRestaurantsPublicQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.GetRestaurantPublicQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.ListRestaurantsPublicQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.RestaurantCardResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.RestaurantPublicResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.SlugAvailabilityResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.mapper.RestaurantWebMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import jakarta.validation.constraints.Min;
@@ -24,13 +26,16 @@ public class RestaurantPublicController {
 
     private final ListRestaurantsPublicQuery listQuery;
     private final GetRestaurantPublicQuery getQuery;
+    private final CheckSlugAvailabilityQuery checkSlug;
     private final RestaurantWebMapper webMapper;
 
     public RestaurantPublicController(ListRestaurantsPublicQuery listQuery,
-                                      GetRestaurantPublicQuery getQuery,
-                                      RestaurantWebMapper webMapper) {
+            GetRestaurantPublicQuery getQuery,
+            CheckSlugAvailabilityQuery checkSlug,
+            RestaurantWebMapper webMapper) {
         this.listQuery = listQuery;
         this.getQuery = getQuery;
+        this.checkSlug = checkSlug;
         this.webMapper = webMapper;
     }
 
@@ -38,8 +43,7 @@ public class RestaurantPublicController {
     public PageResponse<RestaurantCardResponse> list(
             @RequestParam(defaultValue = "0") @Min(0) int page,
             @RequestParam(defaultValue = "20") @Min(1) int size,
-            @RequestParam(required = false) @Size(min = 1, max = 120) String city
-    ) {
+            @RequestParam(required = false) @Size(min = 1, max = 120) String city) {
         var params = new ListRestaurantsPublicQueryParams(page, size, city);
         var result = listQuery.list(params);
         var items = result.items().stream()
@@ -56,12 +60,14 @@ public class RestaurantPublicController {
 
     @GetMapping("/slug/{slug}")
     public RestaurantPublicResponse getBySlug(
-            @PathVariable
-            @Size(min = 1, max = 140)
-            @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG)
-            String slug
-    ) {
+            @PathVariable @Size(min = 1, max = 140) @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG) String slug) {
         var params = new GetRestaurantPublicQueryParams(null, slug);
         return webMapper.toResponse(getQuery.get(params));
+    }
+
+    @GetMapping("/slug/check")
+    public SlugAvailabilityResponse check(@RequestParam("value") String value) {
+        var r = checkSlug.check(value);
+        return new SlugAvailabilityResponse(r.value(), r.normalized(), r.available());
     }
 }
