@@ -108,15 +108,23 @@ public class Restaurant {
         this.status = Status.SUSPENDED;
     }
 
+    public void unsuspend() {
+        if (this.status == Status.SUSPENDED) {
+            this.status = Status.CLOSED; // se reactiva pero queda cerrado hasta revisión manual
+            return;
+        }
+        // idempotente: si ya está CLOSED u OPEN, no hace nada
+    }
+
     /**
      * Update basic profile fields (does not change status). Nulls mean "no change".
      */
     public void updateProfile(Name name,
-                              Slug slug,
-                              Email email,
-                              Phone phone,
-                              Address addressUpdatePayload, // Renombrado para claridad
-                              OpeningHours openingHours) {
+            Slug slug,
+            Email email,
+            Phone phone,
+            Address addressUpdatePayload, // Renombrado para claridad
+            OpeningHours openingHours) {
         // Only apply provided fields; VOs already validated
         ensureNotSuspended("Cannot update profile while restaurant is suspended");
 
@@ -133,7 +141,7 @@ public class Restaurant {
         if (addressUpdatePayload != null) {
             // Si hay un payload de actualización de dirección (incluso parcial)
             // debemos fusionar sus campos con la dirección actual.
-            
+
             // Obtener los valores actuales (si existen)
             String currentLine1 = this.address != null ? this.address.line1() : null;
             String currentLine2 = this.address != null ? this.address.line2() : null;
@@ -146,13 +154,16 @@ public class Restaurant {
             String newLine1 = addressUpdatePayload.line1() != null ? addressUpdatePayload.line1() : currentLine1;
             String newLine2 = addressUpdatePayload.line2() != null ? addressUpdatePayload.line2() : currentLine2;
             String newCity = addressUpdatePayload.city() != null ? addressUpdatePayload.city() : currentCity;
-            String newCountry = addressUpdatePayload.country() != null ? addressUpdatePayload.country() : currentCountry;
-            String newPostalCode = addressUpdatePayload.postalCode() != null ? addressUpdatePayload.postalCode() : currentPostalCode;
+            String newCountry = addressUpdatePayload.country() != null ? addressUpdatePayload.country()
+                    : currentCountry;
+            String newPostalCode = addressUpdatePayload.postalCode() != null ? addressUpdatePayload.postalCode()
+                    : currentPostalCode;
 
             // Crear un nuevo Address VO con los valores fusionados
             this.address = Address.of(newLine1, newLine2, newCity, newCountry, newPostalCode);
         }
-        // Si addressUpdatePayload es null, significa que no se proporcionaron campos de dirección
+        // Si addressUpdatePayload es null, significa que no se proporcionaron campos de
+        // dirección
         // en el comando, por lo que 'this.address' existente no debe cambiar.
 
         if (openingHours != null)
