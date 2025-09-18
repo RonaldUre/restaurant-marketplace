@@ -1,5 +1,4 @@
-// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/restaurant/application/errors/ForbiddenOperationException.java
-package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.errors;
 
 /**
  * Thrown when the caller is authenticated but not authorized to perform the

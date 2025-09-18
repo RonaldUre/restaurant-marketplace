@@ -4,7 +4,8 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.PlatformRestaurantQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.PlatformRestaurantCardView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.AccessControl;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
+
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 

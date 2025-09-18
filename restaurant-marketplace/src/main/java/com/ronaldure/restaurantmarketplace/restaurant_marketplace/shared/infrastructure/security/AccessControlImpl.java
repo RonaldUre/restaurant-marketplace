@@ -1,7 +1,7 @@
-package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.security;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.security;
 
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.ForbiddenOperationException;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.AccessControl;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.errors.ForbiddenOperationException;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentUserProvider;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.AuthenticatedUser;
 

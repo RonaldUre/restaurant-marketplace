@@ -1,9 +1,10 @@
 // src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/shared/infrastructure/web/exception/GlobalExceptionHandler.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.exception;
 
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.ForbiddenOperationException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.RestaurantNotFoundException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.SlugAlreadyInUseException;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.errors.ForbiddenOperationException;
+
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
