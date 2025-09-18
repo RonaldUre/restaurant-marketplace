@@ -73,7 +73,7 @@ public class NimbusTokenDecoder implements TokenDecoder {
                 else throw new SecurityException("tenantId claim must be number/string");
             }
 
-            return new AuthenticatedUser(userId, roles, tenantId == null ? null : new com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId(String.valueOf(tenantId)));
+            return new AuthenticatedUser(userId, roles, tenantId == null ? null : new com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId(tenantId));
         } catch (ParseException e) {
             throw new SecurityException("Malformed JWT", e);
         } catch (IllegalArgumentException e) {

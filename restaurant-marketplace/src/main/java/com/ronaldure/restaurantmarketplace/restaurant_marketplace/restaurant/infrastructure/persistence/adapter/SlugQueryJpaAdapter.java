@@ -3,7 +3,6 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.in
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.SlugAvailabilityQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.persistence.repository.PublicRestaurantJpaRepository;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class SlugQueryJpaAdapter implements SlugAvailabilityQuery {
@@ -15,7 +14,6 @@ public class SlugQueryJpaAdapter implements SlugAvailabilityQuery {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public boolean existsBySlug(String normalizedSlug) {
         return repo.existsBySlug(normalizedSlug);
     }

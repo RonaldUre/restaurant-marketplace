@@ -2,7 +2,6 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.service;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UpdateRestaurantProfileCommand;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.ForbiddenOperationException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.RestaurantNotFoundException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.SlugAlreadyInUseException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.factory.RestaurantFactory;
@@ -10,10 +9,11 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.mapper.RestaurantApplicationMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.UpdateRestaurantProfileUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.AccessControl;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.CurrentTenantProvider;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.RestaurantRepository;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -47,8 +47,7 @@ public class UpdateRestaurantProfileService implements UpdateRestaurantProfileUs
         accessControl.requireRole(ROLE_RESTAURANT_ADMIN);
 
         // 2) Tenant en contexto (obligatorio para admins)
-        Long tenantId = currentTenantProvider.currentTenantId()
-                .orElseThrow(ForbiddenOperationException::tenantContextRequired);
+        Long tenantId = currentTenantProvider.requireCurrent().value();
 
         // 3) Cargar el agregado por id = tenantId
         Restaurant restaurant = restaurantRepository.findById(tenantId)

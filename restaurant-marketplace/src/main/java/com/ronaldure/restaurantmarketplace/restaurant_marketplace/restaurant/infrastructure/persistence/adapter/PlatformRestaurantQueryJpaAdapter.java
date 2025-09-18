@@ -11,7 +11,6 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.applica
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.Optional;
@@ -26,7 +25,6 @@ public class PlatformRestaurantQueryJpaAdapter implements PlatformRestaurantQuer
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PageResponse<PlatformRestaurantCardView> list(ListRestaurantsPlatformQueryParams params) {
         int page = Math.max(params.page(), 0);
         int size = Math.max(params.size(), 1);
@@ -58,7 +56,6 @@ public class PlatformRestaurantQueryJpaAdapter implements PlatformRestaurantQuer
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<RestaurantView> getById(Long id) {
         return repo.getDetailById(id).map(this::toRestaurantView);
     }

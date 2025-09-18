@@ -7,6 +7,7 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.AbstractAuthenticationToken;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import org.springframework.web.filter.OncePerRequestFilter;
 
 import jakarta.servlet.FilterChain;
@@ -50,7 +51,10 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
                     forbidden(response, "Admin route requires tenantId in JWT");
                     return;
                 }
-                TenantContext.set(user.userId(), parseTenantIdOrThrow(user));
+                Long tenantId = user.tenantId().map(TenantId::value)
+                        .orElseThrow(() -> new SecurityException("Invalid tenantId"));
+                TenantContext.set(user.userId(), tenantId);
+
             } else if (isPlatformPath(uri)) {
                 if (!user.isSuperAdmin()) {
                     forbidden(response, "SUPER_ADMIN role required");
@@ -115,16 +119,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         return in == null ? "" : in.replace("\"", "'");
     }
 
-    private Long parseTenantIdOrThrow(AuthenticatedUser user) {
-        return user.tenantId()
-                .map(t -> {
-                    try {
-                        return Long.parseLong(t.value());
-                    } catch (NumberFormatException ex) {
-                        throw new SecurityException("Invalid tenantId");
-                    }
-                })
-                .orElse(null);
-    }
 
 }

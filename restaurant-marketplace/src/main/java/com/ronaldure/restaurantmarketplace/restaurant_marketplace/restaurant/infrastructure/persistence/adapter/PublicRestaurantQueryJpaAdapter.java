@@ -11,7 +11,6 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.applica
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Component;
-import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Optional;
 import java.util.stream.Collectors;
@@ -31,7 +30,6 @@ public class PublicRestaurantQueryJpaAdapter implements PublicRestaurantQuery {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public PageResponse<RestaurantCardView> listPublic(PageRequest page, String cityFilter) {
         // Avoid name clash with your own PageRequest record by using fully qualified name or an alias.
         Page<PublicRestaurantCardProjection> p = repo.listOpen(
@@ -51,13 +49,11 @@ public class PublicRestaurantQueryJpaAdapter implements PublicRestaurantQuery {
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<RestaurantView> getBySlug(String slug) {
         return repo.getDetailBySlug(slug).map(this::toRestaurantView);
     }
 
     @Override
-    @Transactional(readOnly = true)
     public Optional<RestaurantView> getById(Long id) {
         return repo.getDetailById(id).map(this::toRestaurantView);
     }

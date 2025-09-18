@@ -1,16 +1,16 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.service;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UpdateOpeningHoursCommand;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.ForbiddenOperationException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.RestaurantNotFoundException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.mapper.RestaurantApplicationMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.UpdateOpeningHoursUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.AccessControl;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.CurrentTenantProvider;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.RestaurantRepository;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.model.vo.OpeningHours;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -41,8 +41,7 @@ public class UpdateOpeningHoursService implements UpdateOpeningHoursUseCase {
         accessControl.requireRole(ROLE_RESTAURANT_ADMIN);
 
         // 2) Tenant obligatorio
-        Long tenantId = currentTenantProvider.currentTenantId()
-                .orElseThrow(ForbiddenOperationException::tenantContextRequired);
+        Long tenantId = currentTenantProvider.requireCurrent().value();
 
         // 3) Cargar agregado
         Restaurant restaurant = restaurantRepository.findById(tenantId)
