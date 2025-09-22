@@ -31,7 +31,7 @@ CREATE TABLE products (
 ENGINE = InnoDB
 DEFAULT CHARSET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
-
+ 
 -- Indexes to optimize queries
 CREATE INDEX ix_products_tenant_published
     ON products (tenant_id, published);
