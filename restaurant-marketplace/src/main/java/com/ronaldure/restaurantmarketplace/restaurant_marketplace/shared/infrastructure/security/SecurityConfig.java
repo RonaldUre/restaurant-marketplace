@@ -53,6 +53,7 @@ public class SecurityConfig {
                 .requestMatchers("/auth/refresh").permitAll()
                 .requestMatchers("/auth/logout").permitAll() 
                 // Public read
+                .requestMatchers(HttpMethod.GET, "/public/restaurants/**").permitAll()
                 .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
                 // Orders for customers
                 .requestMatchers(HttpMethod.POST, "/orders").hasRole("CUSTOMER")

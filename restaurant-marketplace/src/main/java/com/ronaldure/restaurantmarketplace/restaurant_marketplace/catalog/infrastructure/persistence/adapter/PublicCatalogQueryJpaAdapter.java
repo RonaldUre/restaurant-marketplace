@@ -6,7 +6,6 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.applic
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.PublicProductCardView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.persistence.projection.PublicProductCardProjection;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.persistence.repository.PublicProductJpaRepository;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.model.vo.Status;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import org.springframework.data.domain.*;
@@ -31,7 +30,7 @@ public class PublicCatalogQueryJpaAdapter implements PublicCatalogQuery {
                 params.restaurantId(),
                 nullSafe(params.q()),
                 nullSafe(params.category()),
-                Status.OPEN,
+
                 pageable
         );
 

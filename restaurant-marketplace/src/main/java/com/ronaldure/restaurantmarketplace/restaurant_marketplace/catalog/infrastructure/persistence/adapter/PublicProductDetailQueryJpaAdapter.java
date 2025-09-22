@@ -5,7 +5,6 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.applic
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.PublicProductDetailView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.persistence.projection.PublicProductDetailProjection;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.persistence.repository.PublicProductJpaRepository;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.model.vo.Status;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,7 +22,7 @@ public class PublicProductDetailQueryJpaAdapter implements PublicProductDetailQu
     @Override
     @Transactional(readOnly = true)
     public Optional<PublicProductDetailView> findByRestaurantAndId(Long restaurantId, Long productId) {
-        return repo.findPublicDetail(restaurantId, productId, Status.OPEN)
+        return repo.findPublicDetail(restaurantId, productId)
                    .map(this::toView);
     }
 
