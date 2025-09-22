@@ -6,11 +6,14 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.ListRestaurantsPublicQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.GetRestaurantPublicQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.ListRestaurantsPublicQueryParams;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.RestaurantCardResponse;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.RestaurantPublicResponse;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.SlugAvailabilityResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.ListRestaurantsPublicRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantCardResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantPublicResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.SlugAvailabilityResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.mapper.RestaurantWebMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
+
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
@@ -40,15 +43,14 @@ public class RestaurantPublicController {
     }
 
     @GetMapping
-    public PageResponse<RestaurantCardResponse> list(
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) int size,
-            @RequestParam(required = false) @Size(min = 1, max = 120) String city) {
-        var params = new ListRestaurantsPublicQueryParams(page, size, city);
+    public PageResponse<RestaurantCardResponse> list(@Valid @ModelAttribute ListRestaurantsPublicRequest req) {
+        var params = new ListRestaurantsPublicQueryParams(req.page(), req.size(), req.city());
         var result = listQuery.list(params);
+
         var items = result.items().stream()
                 .map(webMapper::toResponse)
                 .collect(Collectors.toList());
+
         return new PageResponse<>(items, result.totalElements(), result.totalPages());
     }
 

@@ -1,15 +1,16 @@
-// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/restaurant/infrastructure/web/RestaurantAdminController.java
+// src/main/java/.../infrastructure/web/RestaurantAdminController.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web;
 
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UpdateOpeningHoursCommand;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UpdateRestaurantProfileCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.CloseRestaurantUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.GetMyRestaurantDetailQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.OpenRestaurantUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.UpdateOpeningHoursUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.UpdateRestaurantProfileUseCase;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.RestaurantPublicResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.mapper.RestaurantWebMapper;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.UpdateOpeningHoursRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.UpdateRestaurantProfileRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantPublicResponse;
+
 import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -41,8 +42,9 @@ public class RestaurantAdminController {
     }
 
     @PutMapping("/profile")
-    public RestaurantPublicResponse updateProfile(@RequestBody @Valid UpdateRestaurantProfileCommand body) {
-        return webMapper.toResponse(updateProfileUseCase.update(body));
+    public RestaurantPublicResponse updateProfile(@RequestBody @Valid UpdateRestaurantProfileRequest body) {
+        var cmd = webMapper.toCommand(body);
+        return webMapper.toResponse(updateProfileUseCase.update(cmd));
     }
 
     @PostMapping("/open")
@@ -61,7 +63,8 @@ public class RestaurantAdminController {
     }
 
     @PutMapping("/opening-hours")
-    public RestaurantPublicResponse updateOpeningHours(@RequestBody @Valid UpdateOpeningHoursCommand body) {
-        return webMapper.toResponse(updateOpeningHoursUseCase.update(body));
+    public RestaurantPublicResponse updateOpeningHours(@RequestBody @Valid UpdateOpeningHoursRequest body) {
+        var cmd = webMapper.toCommand(body);
+        return webMapper.toResponse(updateOpeningHoursUseCase.update(cmd));
     }
 }

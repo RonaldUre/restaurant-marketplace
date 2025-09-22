@@ -1,4 +1,4 @@
-package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response;
 
 public record RestaurantPublicResponse(
         Long id,
