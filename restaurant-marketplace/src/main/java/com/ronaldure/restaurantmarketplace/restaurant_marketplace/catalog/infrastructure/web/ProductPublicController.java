@@ -13,6 +13,9 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infras
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -29,8 +32,8 @@ public class ProductPublicController {
     private final ProductWebMapper webMapper;
 
     public ProductPublicController(GetPublicProductQuery getPublicProduct,
-                                   ListPublishedProductsQuery listPublishedProducts,
-                                   ProductWebMapper webMapper) {
+            ListPublishedProductsQuery listPublishedProducts,
+            ProductWebMapper webMapper) {
         this.getPublicProduct = getPublicProduct;
         this.listPublishedProducts = listPublishedProducts;
         this.webMapper = webMapper;
@@ -39,7 +42,7 @@ public class ProductPublicController {
     // Public detail
     @GetMapping("/{productId}")
     public ResponseEntity<PublicProductDetailResponse> get(@PathVariable("restaurantId") Long restaurantId,
-                                                           @PathVariable("productId") Long productId) {
+            @PathVariable("productId") Long productId) {
         PublicProductDetailView view = getPublicProduct.get(restaurantId, productId);
         return ResponseEntity.ok(webMapper.toPublicDetailResponse(view));
     }
@@ -49,9 +52,8 @@ public class ProductPublicController {
     public ResponseEntity<PageResponse<PublicProductCardResponse>> list(
             @PathVariable("restaurantId") Long restaurantId,
             @Valid @ModelAttribute ListPublishedProductsRequest query,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size
-    ) {
+            @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
+            @RequestParam(value = "size", defaultValue = "20") @Min(1) @Max(200) int size) {
         ListPublishedProductsQueryParams params = webMapper.toParams(restaurantId, query);
         var pageReq = new PageRequest(page, size);
 

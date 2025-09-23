@@ -10,7 +10,6 @@ public record ListProductsAdminRequest(
     Boolean published,
     Instant createdFrom,
     Instant createdTo,
-    // "createdAt,desc" | "name,asc" | "sku,asc" | "category,desc" | "priceAmount,asc" | "published,desc"
     @Pattern(regexp="^(createdAt|name|sku|category|priceAmount|published),(asc|desc)$")
     String sort
 ) {}

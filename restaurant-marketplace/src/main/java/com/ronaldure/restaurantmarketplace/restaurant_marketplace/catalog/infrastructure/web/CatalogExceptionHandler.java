@@ -51,4 +51,23 @@ public class CatalogExceptionHandler {
             return new ApiError(code, message, System.currentTimeMillis());
         }
     }
+
+    @ExceptionHandler(org.springframework.web.bind.MethodArgumentNotValidException.class)
+    public ResponseEntity<ApiError> handleBodyValidation(
+            org.springframework.web.bind.MethodArgumentNotValidException ex) {
+        var details = ex.getBindingResult().getFieldErrors().stream()
+                .map(err -> err.getField() + ": " + err.getDefaultMessage())
+                .toList();
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("CATALOG_VALIDATION_ERROR", String.join("; ", details)));
+    }
+
+    @ExceptionHandler(jakarta.validation.ConstraintViolationException.class)
+    public ResponseEntity<ApiError> handleConstraintViolation(jakarta.validation.ConstraintViolationException ex) {
+        var details = ex.getConstraintViolations().stream()
+                .map(cv -> cv.getPropertyPath() + ": " + cv.getMessage())
+                .toList();
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("CATALOG_CONSTRAINT_VIOLATION", String.join("; ", details)));
+    }
 }

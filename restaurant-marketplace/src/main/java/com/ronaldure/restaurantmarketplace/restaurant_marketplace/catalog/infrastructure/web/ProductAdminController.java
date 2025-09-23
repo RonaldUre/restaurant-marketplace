@@ -10,6 +10,9 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infras
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
@@ -30,12 +33,12 @@ public class ProductAdminController {
     private final ProductWebMapper webMapper;
 
     public ProductAdminController(CreateProductUseCase createProduct,
-                                  UpdateProductUseCase updateProduct,
-                                  PublishProductUseCase publishProduct,
-                                  UnpublishProductUseCase unpublishProduct,
-                                  GetProductAdminQuery getProductAdmin,
-                                  ListProductsAdminQuery listProductsAdmin,
-                                  ProductWebMapper webMapper) {
+            UpdateProductUseCase updateProduct,
+            PublishProductUseCase publishProduct,
+            UnpublishProductUseCase unpublishProduct,
+            GetProductAdminQuery getProductAdmin,
+            ListProductsAdminQuery listProductsAdmin,
+            ProductWebMapper webMapper) {
         this.createProduct = createProduct;
         this.updateProduct = updateProduct;
         this.publishProduct = publishProduct;
@@ -56,7 +59,7 @@ public class ProductAdminController {
     // Update (id por path + DTO de request)
     @PutMapping("/{id}")
     public ResponseEntity<ProductAdminDetailResponse> update(@PathVariable("id") Long id,
-                                                             @RequestBody @Valid UpdateProductRequest body) {
+            @RequestBody @Valid UpdateProductRequest body) {
         var cmd = webMapper.toCommand(id, body);
         ProductAdminDetailView view = updateProduct.update(cmd);
         return ResponseEntity.ok(webMapper.toAdminDetailResponse(view));
@@ -87,9 +90,8 @@ public class ProductAdminController {
     @GetMapping
     public ResponseEntity<PageResponse<ProductAdminCardResponse>> list(
             @Valid @ModelAttribute ListProductsAdminRequest query,
-            @RequestParam(value = "page", defaultValue = "0") int page,
-            @RequestParam(value = "size", defaultValue = "20") int size
-    ) {
+            @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
+            @RequestParam(value = "size", defaultValue = "20") @Min(1) @Max(200) int size) {
         ListProductsAdminQueryParams params = webMapper.toParams(query);
         var pageReq = new PageRequest(page, size);
 

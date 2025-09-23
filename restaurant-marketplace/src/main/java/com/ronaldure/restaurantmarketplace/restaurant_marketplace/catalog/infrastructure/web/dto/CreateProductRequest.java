@@ -7,7 +7,7 @@ import java.math.BigDecimal;
 public record CreateProductRequest(
     @NotBlank
     @Size(max = 64)
-    @Pattern(regexp = "^[A-Z0-9._-]{1,64}$") // mismo set que Sku
+    @Pattern(regexp = "^[A-Za-z0-9._-]{1,64}$")  // mismo set que Sku
     String sku,
 
     @NotBlank
