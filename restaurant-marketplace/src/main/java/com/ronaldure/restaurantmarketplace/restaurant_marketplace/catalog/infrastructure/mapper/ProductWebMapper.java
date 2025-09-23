@@ -1,6 +1,10 @@
 // src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/catalog/infrastructure/mapper/ProductWebMapper.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.mapper;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.command.CreateProductCommand;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.command.UpdateProductCommand;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.query.ListProductsAdminQueryParams;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.query.ListPublishedProductsQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.*;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.*;
 import org.springframework.stereotype.Component;
@@ -20,8 +24,7 @@ public class ProductWebMapper {
                 view.priceCurrency(),
                 view.published(),
                 view.createdAt(),
-                view.updatedAt()
-        );
+                view.updatedAt());
     }
 
     public ProductAdminCardResponse toAdminCardResponse(ProductAdminCardView view) {
@@ -33,8 +36,7 @@ public class ProductWebMapper {
                 view.priceAmount(),
                 view.priceCurrency(),
                 view.published(),
-                view.createdAt()
-        );
+                view.createdAt());
     }
 
     // Public
@@ -45,8 +47,7 @@ public class ProductWebMapper {
                 view.description(),
                 view.category(),
                 view.priceAmount(),
-                view.priceCurrency()
-        );
+                view.priceCurrency());
     }
 
     public PublicProductCardResponse toPublicCardResponse(PublicProductCardView view) {
@@ -55,7 +56,52 @@ public class ProductWebMapper {
                 view.name(),
                 view.category(),
                 view.priceAmount(),
-                view.priceCurrency()
-        );
+                view.priceCurrency());
     }
+
+    // ===== nuevo: Web -> Commands =====
+    public CreateProductCommand toCommand(CreateProductRequest req) {
+        // description: si viene null o blank, pasa tal cual; ProductFactory lo
+        // convierte a empty()
+        return new CreateProductCommand(
+                req.sku(),
+                req.name(),
+                req.description(),
+                req.category(),
+                req.priceAmount(),
+                req.priceCurrency());
+    }
+
+    public UpdateProductCommand toCommand(Long id, UpdateProductRequest req) {
+        return new UpdateProductCommand(
+                id,
+                req.name(),
+                req.description(),
+                req.category(),
+                req.priceAmount(),
+                req.priceCurrency());
+    }
+
+    public ListPublishedProductsQueryParams toParams(Long restaurantId, ListPublishedProductsRequest req) {
+        return new ListPublishedProductsQueryParams(
+                restaurantId,
+                nullIfBlank(req.q()),
+                nullIfBlank(req.category()),
+                nullIfBlank(req.sort()));
+    }
+
+    public ListProductsAdminQueryParams toParams(ListProductsAdminRequest req) {
+        return new ListProductsAdminQueryParams(
+                nullIfBlank(req.q()),
+                (req.categories() == null || req.categories().isEmpty()) ? null : req.categories(),
+                req.published(),
+                req.createdFrom(),
+                req.createdTo(),
+                nullIfBlank(req.sort()));
+    }
+
+    private String nullIfBlank(String s) {
+        return (s == null || s.isBlank()) ? null : s;
+    }
+
 }

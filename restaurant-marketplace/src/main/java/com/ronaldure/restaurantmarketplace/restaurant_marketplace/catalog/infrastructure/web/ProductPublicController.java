@@ -9,13 +9,17 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.applic
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.mapper.ProductWebMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.PublicProductCardResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.PublicProductDetailResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.ListPublishedProductsRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
+import jakarta.validation.Valid;
 import org.springframework.http.ResponseEntity;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
+@Validated
 @RestController
 @RequestMapping("/public/restaurants/{restaurantId}/products")
 public class ProductPublicController {
@@ -40,17 +44,15 @@ public class ProductPublicController {
         return ResponseEntity.ok(webMapper.toPublicDetailResponse(view));
     }
 
-    // Public list
+    // Public list (usa DTO para query params)
     @GetMapping
     public ResponseEntity<PageResponse<PublicProductCardResponse>> list(
             @PathVariable("restaurantId") Long restaurantId,
-            @RequestParam(value = "q", required = false) String q,
-            @RequestParam(value = "category", required = false) String category,
-            @RequestParam(value = "sort", required = false) String sort,      // e.g. "name,asc" | "priceAmount,desc"
+            @Valid @ModelAttribute ListPublishedProductsRequest query,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", defaultValue = "20") int size
     ) {
-        var params = new ListPublishedProductsQueryParams(restaurantId, q, category, sort);
+        ListPublishedProductsQueryParams params = webMapper.toParams(restaurantId, query);
         var pageReq = new PageRequest(page, size);
 
         PageResponse<PublicProductCardView> result = listPublishedProducts.list(params, pageReq);
