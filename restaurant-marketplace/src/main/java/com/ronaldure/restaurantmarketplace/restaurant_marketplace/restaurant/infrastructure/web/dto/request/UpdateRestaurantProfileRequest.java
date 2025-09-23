@@ -18,7 +18,7 @@ public record UpdateRestaurantProfileRequest(
         String slug,
 
         @Email @Size(max = 255) String email,
-        @Size(max = 30) String phone,
+        @Size(max = 30, min = 1) String phone,
 
         @Valid AddressRequest address,
 

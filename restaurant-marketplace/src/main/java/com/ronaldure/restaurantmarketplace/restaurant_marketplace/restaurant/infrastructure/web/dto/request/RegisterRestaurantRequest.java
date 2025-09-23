@@ -32,5 +32,5 @@ public record RegisterRestaurantRequest(
 
         // Credenciales del admin del tenant
         @NotBlank @Email @Size(max = 255) String adminEmail,
-        @NotBlank @Size(min = 8, max = 100) String adminPassword
+        @NotBlank @Size(min = 8, max = 100) @Pattern(regexp = "^(?=.*[A-Za-z])(?=.*\\d).{8,}$") String adminPassword
 ) {}
