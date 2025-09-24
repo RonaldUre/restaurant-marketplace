@@ -7,6 +7,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.applica
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -19,8 +20,8 @@ public class ListProductsAdminHandler implements ListProductsAdminQuery {
     private final AccessControl accessControl;
 
     public ListProductsAdminHandler(AdminProductQuery adminProductQuery,
-                                    CurrentTenantProvider tenantProvider,
-                                    AccessControl accessControl) {
+            CurrentTenantProvider tenantProvider,
+            AccessControl accessControl) {
         this.adminProductQuery = adminProductQuery;
         this.tenantProvider = tenantProvider;
         this.accessControl = accessControl;
@@ -28,14 +29,13 @@ public class ListProductsAdminHandler implements ListProductsAdminQuery {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ProductAdminCardView> list(ListProductsAdminQueryParams params, PageRequest page) {
-        // Authorization: only RESTAURANT_ADMIN (or SUPER_ADMIN if decides to reuse)
-        accessControl.requireRole("RESTAURANT_ADMIN");
-
-        // Tenant from JWT (never trust request)
+    public PageResponse<ProductAdminCardView> list(ListProductsAdminQueryParams params) {
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
         TenantId tenantId = tenantProvider.requireCurrent();
 
-        // Delegate to query adapter (scoped to tenant)
-        return adminProductQuery.list(tenantId, params, page);
+        // Build PageRequest inside the handler
+        PageRequest pageRequest = new PageRequest(params.page(), params.size());
+
+        return adminProductQuery.list(tenantId, params, pageRequest);
     }
 }

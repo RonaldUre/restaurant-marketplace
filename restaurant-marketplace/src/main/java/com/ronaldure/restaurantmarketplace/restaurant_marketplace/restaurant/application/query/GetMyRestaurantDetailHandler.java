@@ -8,14 +8,13 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Service
 public class GetMyRestaurantDetailHandler implements GetMyRestaurantDetailQuery {
-
-    private static final String ROLE_RESTAURANT_ADMIN = "RESTAURANT_ADMIN";
 
     private final AccessControl accessControl;
     private final CurrentTenantProvider currentTenantProvider;
@@ -36,7 +35,7 @@ public class GetMyRestaurantDetailHandler implements GetMyRestaurantDetailQuery 
     @Transactional(readOnly = true)
     public RestaurantView get() {
         // 1) Auth
-        accessControl.requireRole(ROLE_RESTAURANT_ADMIN);
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // 2) Tenant requerido
         Long tenantId = currentTenantProvider.requireCurrent().value();

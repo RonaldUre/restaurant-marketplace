@@ -11,6 +11,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.factory.RestaurantFactory;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -27,8 +28,6 @@ import org.springframework.transaction.annotation.Transactional;
  */
 @Service
 public class RegisterRestaurantService implements RegisterRestaurantUseCase {
-
-    private static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
 
     private final AccessControl accessControl;
     private final RestaurantRepository restaurantRepository;
@@ -52,7 +51,7 @@ public class RegisterRestaurantService implements RegisterRestaurantUseCase {
     @Transactional // write transaction boundary
     public RestaurantView register(RegisterRestaurantCommand command) {
         // 1) Authorization
-        accessControl.requireRole(ROLE_SUPER_ADMIN);
+        accessControl.requireRole(Roles.SUPER_ADMIN);
 
         // 2) Fast-path uniqueness check for slug (domain handles format; repo checks
         // existence)

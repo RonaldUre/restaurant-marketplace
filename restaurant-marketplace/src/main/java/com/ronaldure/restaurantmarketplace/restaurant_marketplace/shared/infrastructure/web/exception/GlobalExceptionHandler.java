@@ -1,156 +1,106 @@
-// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/shared/infrastructure/web/exception/GlobalExceptionHandler.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.exception;
 
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.RestaurantNotFoundException;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.errors.SlugAlreadyInUseException;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.errors.ForbiddenOperationException;
-
-import jakarta.servlet.http.HttpServletRequest;
-import jakarta.validation.ConstraintViolation;
 import jakarta.validation.ConstraintViolationException;
-import org.slf4j.MDC;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.lang.Nullable;
 import org.springframework.orm.ObjectOptimisticLockingFailureException;
-import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.validation.BindException;
-import org.springframework.validation.FieldError;
 import org.springframework.web.HttpMediaTypeNotSupportedException;
 import org.springframework.web.HttpRequestMethodNotSupportedException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.MissingRequestHeaderException;
 import org.springframework.web.bind.MissingServletRequestParameterException;
-import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.bind.annotation.ControllerAdvice;
 import org.springframework.web.bind.annotation.ExceptionHandler;
+import org.springframework.web.method.annotation.MethodArgumentTypeMismatchException;
 import org.springframework.web.servlet.NoHandlerFoundException;
 
-import java.time.Instant;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.stream.Collectors;
 
 /**
- * Global HTTP exception mapper.
- *
- * Responsibilities:
- * - Translate application/domain/infra exceptions to consistent HTTP error
- * responses.
- * - Never leak internal details (stacktraces, SQL, etc.) to clients.
- * - Provide request path and (optional) traceId for observability.
- *
- * Error format is intentionally simple and stable across modules.
+ * Global HTTP exception mapper (agnóstico de módulos).
+ * - Traduce validaciones, binding, protocolo HTTP, capa de datos y fallbacks genéricos.
+ * - No conoce excepciones de negocio de módulos específicos (esas van en sus handlers locales).
+ * - Formato de error unificado: ApiError (code, message, timestamp).
  */
 @ControllerAdvice
 public class GlobalExceptionHandler {
 
-    // ---------- Application-specific (Restaurant module) ----------
-
-    @ExceptionHandler(RestaurantNotFoundException.class)
-    public ResponseEntity<ErrorResponse> handleRestaurantNotFound(RestaurantNotFoundException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.NOT_FOUND, ex.getMessage(), req, null);
-    }
-
-    @ExceptionHandler(SlugAlreadyInUseException.class)
-    public ResponseEntity<ErrorResponse> handleSlugAlreadyInUse(SlugAlreadyInUseException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.CONFLICT, ex.getMessage(), req, null);
-    }
-
-    @ExceptionHandler(ForbiddenOperationException.class)
-    public ResponseEntity<ErrorResponse> handleForbiddenOperation(ForbiddenOperationException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.FORBIDDEN, ex.getMessage(), req, null);
-    }
-
-    @ExceptionHandler(SecurityException.class)
-    public ResponseEntity<ErrorResponse> handleSecurity(SecurityException ex, HttpServletRequest req) {
-        // No filtramos el mensaje interno para el cliente; mantenemos respuesta
-        // estable.
-        return build(HttpStatus.UNAUTHORIZED, "Invalid or expired credentials", req, null);
-    }
-
     // ---------- Validation & binding ----------
 
-    /** Bean validation for @Valid @RequestBody. */
+    /** Bean validation para @Valid @RequestBody. */
     @ExceptionHandler(MethodArgumentNotValidException.class)
-    public ResponseEntity<ErrorResponse> handleMethodArgumentNotValid(MethodArgumentNotValidException ex,
-            HttpServletRequest req) {
-        List<ValidationError> errors = new ArrayList<>();
-        for (FieldError fe : ex.getBindingResult().getFieldErrors()) {
-            errors.add(new ValidationError(fe.getField(), safeMsg(fe.getDefaultMessage())));
-        }
-        return build(HttpStatus.BAD_REQUEST, "Validation failed for request body", req, errors);
+    public ResponseEntity<ApiError> handleMethodArgumentNotValid(MethodArgumentNotValidException ex) {
+        String joined = ex.getBindingResult().getFieldErrors()
+                .stream()
+                .map(fe -> fe.getField() + ": " + safeMsg(fe.getDefaultMessage()))
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("VALIDATION_ERROR", joined.isBlank() ? "Validation failed" : joined));
     }
 
-    /**
-     * Validation for method parameters (@RequestParam, @PathVariable)
-     * with @Validated.
-     */
+    /** Validation para @RequestParam/@PathVariable con @Validated. */
     @ExceptionHandler(ConstraintViolationException.class)
-    public ResponseEntity<ErrorResponse> handleConstraintViolation(ConstraintViolationException ex,
-            HttpServletRequest req) {
-        List<ValidationError> errors = new ArrayList<>();
-        for (ConstraintViolation<?> v : ex.getConstraintViolations()) {
-            String field = v.getPropertyPath() == null ? null : v.getPropertyPath().toString();
-            errors.add(new ValidationError(field, safeMsg(v.getMessage())));
-        }
-        return build(HttpStatus.BAD_REQUEST, "Constraint violation", req, errors);
+    public ResponseEntity<ApiError> handleConstraintViolation(ConstraintViolationException ex) {
+        String joined = ex.getConstraintViolations()
+                .stream()
+                .map(cv -> (cv.getPropertyPath() != null ? cv.getPropertyPath() : "")
+                        + ": " + safeMsg(cv.getMessage()))
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("CONSTRAINT_VIOLATION", joined.isBlank() ? "Constraint violation" : joined));
     }
 
-    /** Binding errors for @ModelAttribute or general binding failures. */
+    /** Binding errors para @ModelAttribute o binding general. */
     @ExceptionHandler(BindException.class)
-    public ResponseEntity<ErrorResponse> handleBindException(BindException ex,
-            HttpServletRequest req) {
-        List<ValidationError> errors = new ArrayList<>();
-        for (FieldError fe : ex.getFieldErrors()) {
-            errors.add(new ValidationError(fe.getField(), safeMsg(fe.getDefaultMessage())));
-        }
-        return build(HttpStatus.BAD_REQUEST, "Binding failed", req, errors);
+    public ResponseEntity<ApiError> handleBindException(BindException ex) {
+        String joined = ex.getFieldErrors()
+                .stream()
+                .map(fe -> fe.getField() + ": " + safeMsg(fe.getDefaultMessage()))
+                .collect(Collectors.joining("; "));
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("BINDING_ERROR", joined.isBlank() ? "Binding failed" : joined));
     }
 
     @ExceptionHandler(MissingServletRequestParameterException.class)
-    public ResponseEntity<ErrorResponse> handleMissingParam(MissingServletRequestParameterException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.BAD_REQUEST, "Missing request parameter: " + ex.getParameterName(), req, null);
+    public ResponseEntity<ApiError> handleMissingParam(MissingServletRequestParameterException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("MISSING_PARAMETER", "Missing request parameter: " + ex.getParameterName()));
     }
 
     @ExceptionHandler(MissingRequestHeaderException.class)
-    public ResponseEntity<ErrorResponse> handleMissingHeader(MissingRequestHeaderException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.BAD_REQUEST, "Missing request header: " + ex.getHeaderName(), req, null);
+    public ResponseEntity<ApiError> handleMissingHeader(MissingRequestHeaderException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("MISSING_HEADER", "Missing request header: " + ex.getHeaderName()));
     }
 
     @ExceptionHandler(MethodArgumentTypeMismatchException.class)
-    public ResponseEntity<ErrorResponse> handleTypeMismatch(MethodArgumentTypeMismatchException ex,
-            HttpServletRequest req) {
-        String name = ex.getName();
+    public ResponseEntity<ApiError> handleTypeMismatch(MethodArgumentTypeMismatchException ex) {
         String requiredType = ex.getRequiredType() != null ? ex.getRequiredType().getSimpleName() : "unknown";
-        String msg = "Parameter '" + name + "' has invalid value. Expected type: " + requiredType;
-        return build(HttpStatus.BAD_REQUEST, msg, req, null);
+        String msg = "Parameter '" + ex.getName() + "' has invalid value. Expected type: " + requiredType;
+        return ResponseEntity.badRequest().body(ApiError.of("TYPE_MISMATCH", msg));
     }
 
     // ---------- HTTP protocol & parsing ----------
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
-    public ResponseEntity<ErrorResponse> handleNotReadable(HttpMessageNotReadableException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.BAD_REQUEST, "Malformed JSON request", req, null);
+    public ResponseEntity<ApiError> handleNotReadable(HttpMessageNotReadableException ex) {
+        return ResponseEntity.badRequest().body(ApiError.of("MALFORMED_JSON", "Malformed JSON request"));
     }
 
     @ExceptionHandler(HttpMediaTypeNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleMediaType(HttpMediaTypeNotSupportedException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.UNSUPPORTED_MEDIA_TYPE, "Unsupported media type", req, null);
+    public ResponseEntity<ApiError> handleMediaType(HttpMediaTypeNotSupportedException ex) {
+        return ResponseEntity.status(HttpStatus.UNSUPPORTED_MEDIA_TYPE)
+                .body(ApiError.of("UNSUPPORTED_MEDIA_TYPE", "Unsupported media type"));
     }
 
     @ExceptionHandler(HttpRequestMethodNotSupportedException.class)
-    public ResponseEntity<ErrorResponse> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex,
-            HttpServletRequest req) {
+    public ResponseEntity<ApiError> handleMethodNotSupported(HttpRequestMethodNotSupportedException ex) {
         HttpHeaders headers = new HttpHeaders();
         if (ex.getSupportedHttpMethods() != null) {
             for (HttpMethod m : ex.getSupportedHttpMethods()) {
@@ -158,107 +108,62 @@ public class GlobalExceptionHandler {
             }
         }
         return new ResponseEntity<>(
-                errorBody(HttpStatus.METHOD_NOT_ALLOWED, "Method not allowed", req, null),
+                ApiError.of("METHOD_NOT_ALLOWED", "Method not allowed"),
                 headers,
-                HttpStatus.METHOD_NOT_ALLOWED);
+                HttpStatus.METHOD_NOT_ALLOWED
+        );
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
-    public ResponseEntity<ErrorResponse> handleNoHandler(NoHandlerFoundException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.NOT_FOUND, "Endpoint not found", req, null);
+    public ResponseEntity<ApiError> handleNoHandler(NoHandlerFoundException ex) {
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(ApiError.of("ENDPOINT_NOT_FOUND", "Endpoint not found"));
     }
 
     // ---------- Data layer ----------
 
-    /**
-     * Generic DB constraint violations (e.g., unique indexes) not previously
-     * caught.
-     */
+    /** Violaciones genéricas de integridad que no atrapó un handler de módulo. */
     @ExceptionHandler(DataIntegrityViolationException.class)
-    public ResponseEntity<ErrorResponse> handleDataIntegrity(DataIntegrityViolationException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.CONFLICT, "Data integrity violation", req, null);
+    public ResponseEntity<ApiError> handleDataIntegrity(DataIntegrityViolationException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("DATA_INTEGRITY_VIOLATION", "Data integrity violation"));
     }
 
     // ---------- Domain fallbacks ----------
 
-    /** Domain guardrails surfaced as IllegalArgumentException ⇒ 400 (bad input). */
+    /** Entradas inválidas a nivel de dominio ⇒ 400. */
     @ExceptionHandler(IllegalArgumentException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalArgument(IllegalArgumentException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.BAD_REQUEST, safeMsg(ex.getMessage()), req, null);
+    public ResponseEntity<ApiError> handleIllegalArgument(IllegalArgumentException ex) {
+        return ResponseEntity.badRequest()
+                .body(ApiError.of("BAD_INPUT", safeMsg(ex.getMessage())));
     }
 
-    /**
-     * IllegalStateException often represents business state conflicts ⇒ 409.
-     * (e.g., trying to open a suspended restaurant if domain throws such guard)
-     */
+    /** Conflictos de estado de negocio ⇒ 409. */
     @ExceptionHandler(IllegalStateException.class)
-    public ResponseEntity<ErrorResponse> handleIllegalState(IllegalStateException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.CONFLICT, safeMsg(ex.getMessage()), req, null);
+    public ResponseEntity<ApiError> handleIllegalState(IllegalStateException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("BUSINESS_CONFLICT", safeMsg(ex.getMessage())));
+    }
+
+    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
+    public ResponseEntity<ApiError> handleOptimistic(ObjectOptimisticLockingFailureException ex) {
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("CONCURRENT_MODIFICATION", "Concurrent modification"));
     }
 
     // ---------- Last resort ----------
 
     @ExceptionHandler(Exception.class)
-    public ResponseEntity<ErrorResponse> handleGeneric(Exception ex, HttpServletRequest req) {
-        // Do not leak internal details. Log server-side with stacktrace.
-        return build(HttpStatus.INTERNAL_SERVER_ERROR, "Unexpected error", req, null);
-    }
-
-    @ExceptionHandler(ObjectOptimisticLockingFailureException.class)
-    public ResponseEntity<ErrorResponse> handleOptimistic(ObjectOptimisticLockingFailureException ex,
-            HttpServletRequest req) {
-        return build(HttpStatus.CONFLICT, "Concurrent modification", req, null);
+    public ResponseEntity<ApiError> handleGeneric(Exception ex) {
+        // Log detallado en server; respuesta estable al cliente.
+        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                .body(ApiError.of("UNEXPECTED_ERROR", "Unexpected error"));
     }
 
     // ---------- Helpers ----------
 
-    private ResponseEntity<ErrorResponse> build(HttpStatus status,
-            String message,
-            HttpServletRequest req,
-            @Nullable List<ValidationError> errors) {
-        return new ResponseEntity<>(errorBody(status, message, req, errors), status);
-    }
-
-    private ErrorResponse errorBody(HttpStatus status,
-            String message,
-            HttpServletRequest req,
-            @Nullable List<ValidationError> errors) {
-        String traceId = MDC.get("traceId"); // if you put traceId into MDC earlier (filter/interceptor)
-        return new ErrorResponse(
-                status.value(),
-                status.getReasonPhrase(),
-                safeMsg(message),
-                req != null ? req.getRequestURI() : null,
-                Instant.now().toString(),
-                traceId,
-                errors == null ? List.of() : errors);
-    }
-
     private String safeMsg(@Nullable String msg) {
-        if (msg == null)
-            return null;
-        // Strip newlines or sensitive info if necessary (keep client payloads tidy)
+        if (msg == null) return null;
         return msg.replaceAll("[\\r\\n]+", " ").trim();
-    }
-
-    // ---------- Error payloads ----------
-
-    public record ErrorResponse(
-            int status,
-            String error,
-            String message,
-            String path,
-            String timestamp,
-            String traceId,
-            List<ValidationError> errors) {
-    }
-
-    public record ValidationError(
-            @Nullable String field,
-            String message) {
     }
 }

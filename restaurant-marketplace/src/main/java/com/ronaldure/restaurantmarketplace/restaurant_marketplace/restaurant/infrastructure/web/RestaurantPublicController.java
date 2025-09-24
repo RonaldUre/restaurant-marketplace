@@ -6,6 +6,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.ListRestaurantsPublicQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.GetRestaurantPublicQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.ListRestaurantsPublicQueryParams;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantCardView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.ListRestaurantsPublicRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantCardResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantPublicResponse;
@@ -17,10 +18,12 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.stream.Collectors;
+import java.util.List;
 
 @RestController
 @RequestMapping("/restaurants")
@@ -33,43 +36,61 @@ public class RestaurantPublicController {
     private final RestaurantWebMapper webMapper;
 
     public RestaurantPublicController(ListRestaurantsPublicQuery listQuery,
-            GetRestaurantPublicQuery getQuery,
-            CheckSlugAvailabilityQuery checkSlug,
-            RestaurantWebMapper webMapper) {
+                                      GetRestaurantPublicQuery getQuery,
+                                      CheckSlugAvailabilityQuery checkSlug,
+                                      RestaurantWebMapper webMapper) {
         this.listQuery = listQuery;
         this.getQuery = getQuery;
         this.checkSlug = checkSlug;
         this.webMapper = webMapper;
     }
 
+    // List → 200 OK
     @GetMapping
-    public PageResponse<RestaurantCardResponse> list(@Valid @ModelAttribute ListRestaurantsPublicRequest req) {
-        var params = new ListRestaurantsPublicQueryParams(req.page(), req.size(), req.city());
-        var result = listQuery.list(params);
+    public ResponseEntity<PageResponse<RestaurantCardResponse>> list(
+            @Valid @ModelAttribute ListRestaurantsPublicRequest req) {
 
-        var items = result.items().stream()
+        ListRestaurantsPublicQueryParams params =
+                new ListRestaurantsPublicQueryParams(req.page(), req.size(), req.city());
+
+        PageResponse<RestaurantCardView> result = listQuery.list(params);
+
+        List<RestaurantCardResponse> items = result.items().stream()
                 .map(webMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
 
-        return new PageResponse<>(items, result.totalElements(), result.totalPages());
+        PageResponse<RestaurantCardResponse> body =
+                new PageResponse<>(items, result.totalElements(), result.totalPages());
+
+        return ResponseEntity.ok(body);
     }
 
+    // Detail by id → 200 OK
     @GetMapping("/{id}")
-    public RestaurantPublicResponse getById(@PathVariable @Min(1) Long id) {
-        var params = new GetRestaurantPublicQueryParams(id, null);
-        return webMapper.toResponse(getQuery.get(params));
+    public ResponseEntity<RestaurantPublicResponse> getById(@PathVariable @Min(1) Long id) {
+        GetRestaurantPublicQueryParams params = new GetRestaurantPublicQueryParams(id, null);
+        RestaurantPublicResponse body = webMapper.toResponse(getQuery.get(params));
+        return ResponseEntity.ok(body);
     }
 
+    // Detail by slug → 200 OK
     @GetMapping("/slug/{slug}")
-    public RestaurantPublicResponse getBySlug(
-            @PathVariable @Size(min = 1, max = 140) @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG) String slug) {
-        var params = new GetRestaurantPublicQueryParams(null, slug);
-        return webMapper.toResponse(getQuery.get(params));
+    public ResponseEntity<RestaurantPublicResponse> getBySlug(
+            @PathVariable
+            @Size(min = 1, max = 140)
+            @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG)
+            String slug) {
+
+        GetRestaurantPublicQueryParams params = new GetRestaurantPublicQueryParams(null, slug);
+        RestaurantPublicResponse body = webMapper.toResponse(getQuery.get(params));
+        return ResponseEntity.ok(body);
     }
 
+    // Slug availability check → 200 OK
     @GetMapping("/slug/check")
-    public SlugAvailabilityResponse check(@RequestParam("value") String value) {
+    public ResponseEntity<SlugAvailabilityResponse> check(@RequestParam("value") String value) {
         var r = checkSlug.check(value);
-        return new SlugAvailabilityResponse(r.value(), r.normalized(), r.available());
+        SlugAvailabilityResponse body = new SlugAvailabilityResponse(r.value(), r.normalized(), r.available());
+        return ResponseEntity.ok(body);
     }
 }

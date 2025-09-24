@@ -10,6 +10,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.dom
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.model.vo.OpeningHours;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,7 +18,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UpdateOpeningHoursService implements UpdateOpeningHoursUseCase {
 
-    private static final String ROLE_RESTAURANT_ADMIN = "RESTAURANT_ADMIN";
+    
 
     private final AccessControl accessControl;
     private final CurrentTenantProvider currentTenantProvider;
@@ -38,7 +39,7 @@ public class UpdateOpeningHoursService implements UpdateOpeningHoursUseCase {
     @Transactional
     public RestaurantView update(UpdateOpeningHoursCommand command) {
         // 1) Auth
-        accessControl.requireRole(ROLE_RESTAURANT_ADMIN);
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // 2) Tenant obligatorio
         Long tenantId = currentTenantProvider.requireCurrent().value();

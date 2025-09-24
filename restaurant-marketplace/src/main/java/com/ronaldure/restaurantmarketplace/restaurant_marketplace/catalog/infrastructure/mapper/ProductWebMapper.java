@@ -7,6 +7,14 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.applic
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.query.ListPublishedProductsQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.*;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.*;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.request.CreateProductRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.request.ListProductsAdminRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.request.ListPublishedProductsRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response.ProductAdminCardResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response.ProductAdminDetailResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response.PublicProductCardResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response.PublicProductDetailResponse;
+
 import org.springframework.stereotype.Component;
 
 @Component
@@ -82,12 +90,16 @@ public class ProductWebMapper {
                 req.priceCurrency());
     }
 
+    // Mapper: Web -> Application QueryParams
     public ListPublishedProductsQueryParams toParams(Long restaurantId, ListPublishedProductsRequest req) {
         return new ListPublishedProductsQueryParams(
                 restaurantId,
                 nullIfBlank(req.q()),
                 nullIfBlank(req.category()),
-                nullIfBlank(req.sort()));
+                defaultInt(req.page(), 0),
+                defaultInt(req.size(), 20),
+                nullIfBlank(req.sortBy()),
+                nullIfBlank(req.sortDir()));
     }
 
     public ListProductsAdminQueryParams toParams(ListProductsAdminRequest req) {
@@ -97,11 +109,19 @@ public class ProductWebMapper {
                 req.published(),
                 req.createdFrom(),
                 req.createdTo(),
-                nullIfBlank(req.sort()));
+                defaultInt(req.page(), 0),
+                defaultInt(req.size(), 20),
+                nullIfBlank(req.sortBy()),
+                nullIfBlank(req.sortDir()));
     }
 
-    private String nullIfBlank(String s) {
+    // ---- helpers ----
+    private static String nullIfBlank(String s) {
         return (s == null || s.isBlank()) ? null : s;
+    }
+
+    private static int defaultInt(Integer value, int dft) {
+        return value == null ? dft : value;
     }
 
 }

@@ -8,6 +8,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,7 +16,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Service
 public class UnsuspendRestaurantService implements UnsuspendRestaurantUseCase {
 
-    private static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
+    
 
     private final AccessControl accessControl;
     private final RestaurantRepository restaurantRepository;
@@ -33,7 +34,7 @@ public class UnsuspendRestaurantService implements UnsuspendRestaurantUseCase {
     @Transactional
     public RestaurantView unsuspend(UnsuspendRestaurantCommand command) {
         // 1) Autorización
-        accessControl.requireRole(ROLE_SUPER_ADMIN);
+        accessControl.requireRole(Roles.SUPER_ADMIN);
 
         // 2) Validación XOR
         if (command == null || !command.hasExactlyOneTarget()) {

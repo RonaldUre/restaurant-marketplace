@@ -9,14 +9,13 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class SuspendRestaurantService implements SuspendRestaurantUseCase {
-
-    private static final String ROLE_SUPER_ADMIN = "SUPER_ADMIN";
 
     private final AccessControl accessControl;
     private final RestaurantRepository restaurantRepository;
@@ -34,7 +33,7 @@ public class SuspendRestaurantService implements SuspendRestaurantUseCase {
     @Transactional
     public RestaurantView suspend(SuspendRestaurantCommand command) {
         // 1) Authorization (defense in depth)
-        accessControl.requireRole(ROLE_SUPER_ADMIN);
+        accessControl.requireRole(Roles.SUPER_ADMIN);
 
         // 2) Validate XOR target (exactly one of id or slug)
         if (command == null || !command.hasExactlyOneTarget()) {

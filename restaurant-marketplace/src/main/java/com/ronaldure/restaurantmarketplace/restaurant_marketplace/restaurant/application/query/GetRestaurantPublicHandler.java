@@ -5,14 +5,14 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.GetRestaurantPublicQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.PublicRestaurantQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 /**
  * Handler de la consulta pública de detalle.
  * Política de error centralizada en application: 404 si no existe.
  */
-@Component
+@Service
 public class GetRestaurantPublicHandler implements GetRestaurantPublicQuery {
 
     private final PublicRestaurantQuery publicRestaurantQuery;

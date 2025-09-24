@@ -6,6 +6,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.applic
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.ProductAdminDetailView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +30,7 @@ public class GetProductAdminHandler implements GetProductAdminQuery {
     @Transactional(readOnly = true)
     public ProductAdminDetailView get(Long productId) {
         // Authorization
-        accessControl.requireRole("RESTAURANT_ADMIN");
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // Tenant scope
         TenantId tenantId = tenantProvider.requireCurrent();

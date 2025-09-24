@@ -13,14 +13,13 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class UpdateRestaurantProfileService implements UpdateRestaurantProfileUseCase {
-
-    private static final String ROLE_RESTAURANT_ADMIN = "RESTAURANT_ADMIN";
 
     private final AccessControl accessControl;
     private final CurrentTenantProvider currentTenantProvider;
@@ -44,7 +43,7 @@ public class UpdateRestaurantProfileService implements UpdateRestaurantProfileUs
     @Transactional
     public RestaurantView update(UpdateRestaurantProfileCommand command) {
         // 1) Autorización (defensa en profundidad)
-        accessControl.requireRole(ROLE_RESTAURANT_ADMIN);
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // 2) Tenant en contexto (obligatorio para admins)
         Long tenantId = currentTenantProvider.requireCurrent().value();

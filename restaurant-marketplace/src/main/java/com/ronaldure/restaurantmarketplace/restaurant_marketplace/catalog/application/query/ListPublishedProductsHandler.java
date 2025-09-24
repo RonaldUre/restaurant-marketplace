@@ -20,8 +20,10 @@ public class ListPublishedProductsHandler implements ListPublishedProductsQuery 
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<PublicProductCardView> list(ListPublishedProductsQueryParams params, PageRequest page) {
-        // Public endpoint: adapter must filter published=true and restaurant.status=OPEN
-        return publicCatalogQuery.listPublished(params, page);
+    public PageResponse<PublicProductCardView> list(ListPublishedProductsQueryParams params) {
+        // Build PageRequest inside the handler
+        PageRequest pageRequest = new PageRequest(params.page(), params.size());
+
+        return publicCatalogQuery.listPublished(params, pageRequest);
     }
 }

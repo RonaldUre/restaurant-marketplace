@@ -1,12 +1,15 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.service;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.errors.ProductNotFoundException;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.mapper.ProductApplicationMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.ports.in.UnpublishProductUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.ports.out.ProductRepository;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.ProductAdminDetailView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.Product;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.model.vo.ProductId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -17,20 +20,23 @@ public class UnpublishProductService implements UnpublishProductUseCase {
     private final ProductRepository productRepository;
     private final CurrentTenantProvider tenantProvider;
     private final AccessControl accessControl;
+    private final ProductApplicationMapper mapper;
 
     public UnpublishProductService(ProductRepository productRepository,
-                                   CurrentTenantProvider tenantProvider,
-                                   AccessControl accessControl) {
+            CurrentTenantProvider tenantProvider,
+            AccessControl accessControl,
+            ProductApplicationMapper mapper) {
         this.productRepository = productRepository;
         this.tenantProvider = tenantProvider;
         this.accessControl = accessControl;
+        this.mapper = mapper;
     }
 
     @Override
     @Transactional
-    public void unpublish(Long productId) {
+    public ProductAdminDetailView unpublish(Long productId) {
         // 1) Authorization
-        accessControl.requireRole("RESTAURANT_ADMIN");
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // 2) Tenant from JWT
         TenantId tenantId = tenantProvider.requireCurrent();
@@ -44,6 +50,8 @@ public class UnpublishProductService implements UnpublishProductUseCase {
         product.unpublish();
 
         // 5) Persist
-        productRepository.save(product);
+        Product saved = productRepository.save(product);
+
+        return mapper.toAdminDetail(saved);
     }
 }

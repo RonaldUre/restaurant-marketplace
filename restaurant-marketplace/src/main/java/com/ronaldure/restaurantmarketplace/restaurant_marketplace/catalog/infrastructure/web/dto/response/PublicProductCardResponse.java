@@ -1,5 +1,5 @@
 // src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/catalog/infrastructure/web/dto/PublicProductCardResponse.java
-package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response;
 
 import java.math.BigDecimal;
 

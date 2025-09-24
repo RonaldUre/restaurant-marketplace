@@ -12,6 +12,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.model.vo.Sku;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,7 @@ public class CreateProductService implements CreateProductUseCase {
     @Transactional
     public ProductAdminDetailView create(CreateProductCommand command) {
         // 1) Authorization guard
-        accessControl.requireRole("RESTAURANT_ADMIN");
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // 2) Tenant resolution from JWT (never from request)
         TenantId tenantId = tenantProvider.requireCurrent();

@@ -12,6 +12,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.model.vo.ProductId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,7 +42,7 @@ public class UpdateProductService implements UpdateProductUseCase {
     @Transactional
     public ProductAdminDetailView update(UpdateProductCommand command) {
         // 1) Authorization
-        accessControl.requireRole("RESTAURANT_ADMIN");
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // 2) Tenant from JWT
         TenantId tenantId = tenantProvider.requireCurrent();

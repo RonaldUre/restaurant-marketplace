@@ -9,14 +9,13 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.Restaurant;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class OpenRestaurantService implements OpenRestaurantUseCase {
-
-    private static final String ROLE_RESTAURANT_ADMIN = "RESTAURANT_ADMIN";
 
     private final AccessControl accessControl;
     private final CurrentTenantProvider currentTenantProvider;
@@ -37,7 +36,7 @@ public class OpenRestaurantService implements OpenRestaurantUseCase {
     @Transactional
     public RestaurantView open() {
         // 1) Authorization
-        accessControl.requireRole(ROLE_RESTAURANT_ADMIN);
+        accessControl.requireRole(Roles.RESTAURANT_ADMIN);
 
         // 2) Tenant context required
         Long tenantId = currentTenantProvider.requireCurrent().value();

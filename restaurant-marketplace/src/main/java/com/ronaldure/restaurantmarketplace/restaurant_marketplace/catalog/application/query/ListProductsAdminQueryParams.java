@@ -10,5 +10,24 @@ public record ListProductsAdminQueryParams(
         Boolean published,        // null = all
         Instant createdFrom,
         Instant createdTo,
-        String sort               // e.g. "createdAt,desc" | "name,asc"
-) { }
+int page,                  // 0-based
+        int size,                  // > 0
+        String sortBy,             // e.g. "createdAt" | "name" | "priceAmount" | "published"
+        String sortDir             // "asc" | "desc"
+) {
+    /**
+     * Normaliza el campo de ordenamiento contra una whitelist.
+     * Si sortBy es null/blank o no está permitido, devuelve un valor por defecto.
+     */
+    public String safeSortBy(Set<String> allowed, String defaultField) {
+        String candidate = (sortBy == null || sortBy.isBlank()) ? defaultField : sortBy;
+        return (allowed != null && allowed.contains(candidate)) ? candidate : defaultField;
+    }
+
+    /**
+     * Normaliza la dirección de ordenamiento. Default: "desc".
+     */
+    public String safeSortDir() {
+        return "asc".equalsIgnoreCase(sortDir) ? "asc" : "desc";
+    }
+}

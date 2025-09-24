@@ -9,12 +9,19 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infras
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
+
+import java.util.Set;
+
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
 @Component
 public class AdminProductQueryJpaAdapter implements AdminProductQuery {
+
+    private static final Set<String> ALLOWED_SORTS = Set.of(
+        "createdAt", "name", "sku", "category", "priceAmount", "published"
+    );
 
     private final AdminProductJpaRepository repo;
 
@@ -24,11 +31,13 @@ public class AdminProductQueryJpaAdapter implements AdminProductQuery {
 
     @Override
     @Transactional(readOnly = true)
-    public PageResponse<ProductAdminCardView> list(TenantId tenantId, ListProductsAdminQueryParams params, PageRequest page) {
-        Pageable pageable = buildPageable(params.sort(), page);
+    public PageResponse<ProductAdminCardView> list(
+            TenantId tenantId,
+            ListProductsAdminQueryParams params,
+            PageRequest page) {
 
-        // Nota: si luego necesitas Set<String> categories y createdFrom/To,
-        // migramos a Criteria API/Specification.
+        Pageable pageable = buildPageable(params, page); // <— usa params, no params.sort()
+
         String category = (params.categories() != null && !params.categories().isEmpty())
                 ? params.categories().iterator().next()
                 : null;
@@ -48,6 +57,19 @@ public class AdminProductQueryJpaAdapter implements AdminProductQuery {
         );
     }
 
+    // NUEVO: construye el Pageable desde sortBy/sortDir normalizados
+    private Pageable buildPageable(ListProductsAdminQueryParams params, PageRequest page) {
+        // normaliza con helpers del record
+        String sortBy = params.safeSortBy(ALLOWED_SORTS, "createdAt");
+        String sortDir = params.safeSortDir();
+
+        String property = mapSortableProperty(sortBy);
+        Sort.Direction direction = "asc".equalsIgnoreCase(sortDir) ? Sort.Direction.ASC : Sort.Direction.DESC;
+
+        Sort sort = Sort.by(direction, property);
+        return PageRequestImpl.of(page.page(), page.size(), sort);
+    }
+
     private ProductAdminCardView toView(ProductAdminCardProjection p) {
         return new ProductAdminCardView(
                 p.getId(),
@@ -61,27 +83,8 @@ public class AdminProductQueryJpaAdapter implements AdminProductQuery {
         );
     }
 
-    private Pageable buildPageable(String sortFromParams, PageRequest page) {
-        // sort solo desde params; si no viene, default por createdAt desc
-        String sortSpec = (sortFromParams != null && !sortFromParams.isBlank())
-                ? sortFromParams
-                : "createdAt,desc";
-
-        Sort sort = parseSort(sortSpec);
-        return PageRequestImpl.of(page.page(), page.size(), sort);
-    }
-
-    private Sort parseSort(String spec) {
-        String[] parts = spec.split(",", 2);
-        String prop = mapSortableProperty(parts[0].trim());
-        Sort.Direction dir = (parts.length > 1 && "desc".equalsIgnoreCase(parts[1].trim()))
-                ? Sort.Direction.DESC
-                : Sort.Direction.ASC;
-        return Sort.by(dir, prop);
-    }
-
+    // Mapea los alias permitidos a campos de JPA (whitelist)
     private String mapSortableProperty(String raw) {
-        // Whitelist a campos reales de JPA
         return switch (raw) {
             case "name" -> "name";
             case "sku" -> "sku";

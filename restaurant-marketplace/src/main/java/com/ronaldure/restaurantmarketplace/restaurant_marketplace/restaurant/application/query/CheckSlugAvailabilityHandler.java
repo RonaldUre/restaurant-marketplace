@@ -3,12 +3,12 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.ap
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.CheckSlugAvailabilityQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.SlugAvailabilityQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.domain.model.vo.Slug;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.Set;
 
-@Component
+@Service
 public class CheckSlugAvailabilityHandler implements CheckSlugAvailabilityQuery {
 
     private final SlugAvailabilityQuery slugAvailabilityQuery;

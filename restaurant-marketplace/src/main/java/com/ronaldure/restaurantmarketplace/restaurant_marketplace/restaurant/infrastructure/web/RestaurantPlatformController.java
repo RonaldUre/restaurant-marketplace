@@ -1,11 +1,17 @@
 // src/main/java/.../infrastructure/web/RestaurantPlatformController.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.RegisterRestaurantCommand;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.SuspendRestaurantCommand;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UnsuspendRestaurantCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.GetRestaurantPlatformQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.ListRestaurantsPlatformQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.RegisterRestaurantUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.SuspendRestaurantUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.UnsuspendRestaurantUseCase;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.ListRestaurantsPlatformQueryParams;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.PlatformRestaurantCardView;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.mapper.RestaurantWebMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.ListRestaurantsPlatformRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.RegisterRestaurantRequest;
@@ -16,13 +22,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
-import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.Instant;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/platform/restaurants")
@@ -50,96 +54,83 @@ public class RestaurantPlatformController {
         this.webMapper = webMapper;
     }
 
+    // List → 200 OK
     @GetMapping
-    public PageResponse<PlatformRestaurantCardResponse> list(
-            @RequestParam(defaultValue = "0") @Min(0) int page,
-            @RequestParam(defaultValue = "20") @Min(1) int size,
-            // Spring permite ?statuses=OPEN&statuses=CLOSED o ?statuses=OPEN,CLOSED
-            @RequestParam(required = false) List<String> statuses,
-            @RequestParam(required = false) @Size(min = 1, max = 120) String city,
-            @RequestParam(required = false) @Size(min = 1, max = 120) String q,
-            @RequestParam(required = false, defaultValue = "createdAt") String sortBy,
-            @RequestParam(required = false, defaultValue = "desc") String sortDir,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdFrom,
-            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) Instant createdTo) {
+    public ResponseEntity<PageResponse<PlatformRestaurantCardResponse>> list(
+            @Valid @ModelAttribute ListRestaurantsPlatformRequest req) {
 
-        // DTO web (valida aquí y queda desacoplado de application)
-        var req = new ListRestaurantsPlatformRequest(
-                page, size, normalizeStatuses(statuses), city, q, sortBy, sortDir, createdFrom, createdTo);
+        ListRestaurantsPlatformQueryParams params = webMapper.toQueryParams(req);
 
-        // Mapper web -> params de aplicación
-        var params = webMapper.toQueryParams(req);
+        PageResponse<PlatformRestaurantCardView> result = listPlatformQuery.list(params);
 
-        var result = listPlatformQuery.list(params);
-        var items = result.items().stream()
+        List<PlatformRestaurantCardResponse> items = result.items().stream()
                 .map(webMapper::toResponse)
-                .collect(Collectors.toList());
+                .toList();
 
-        return new PageResponse<>(items, result.totalElements(), result.totalPages());
+        PageResponse<PlatformRestaurantCardResponse> body = new PageResponse<>(items, result.totalElements(),
+                result.totalPages());
+
+        return ResponseEntity.ok(body); // 200
     }
 
+    // Detail by id → 200 OK
     @GetMapping("/{id}")
-    public RestaurantPublicResponse getById(@PathVariable @Min(1) Long id) {
-        var view = getPlatformQuery.getById(id);
-        return webMapper.toResponse(view);
+    public ResponseEntity<RestaurantPublicResponse> getById(@PathVariable @Min(1) Long id) {
+        RestaurantView view = getPlatformQuery.getById(id);
+        RestaurantPublicResponse body = webMapper.toResponse(view);
+        return ResponseEntity.ok(body); // 200
     }
 
     /**
      * POST /platform/restaurants
      * Crea un nuevo restaurante (tenant). Por defecto queda en estado CLOSED.
+     * → 201 Created + Location
      */
     @PostMapping
-    public RestaurantPublicResponse register(@RequestBody @Valid RegisterRestaurantRequest body) {
-        var cmd = webMapper.toCommand(body); // web -> command (application)
-        var view = registerUseCase.register(cmd);
-        return webMapper.toResponse(view);
+    public ResponseEntity<RestaurantPublicResponse> register(@RequestBody @Valid RegisterRestaurantRequest body) {
+        RegisterRestaurantCommand cmd = webMapper.toCommand(body);
+        RestaurantView view = registerUseCase.register(cmd);
+        RestaurantPublicResponse resp = webMapper.toResponse(view);
+
+        java.net.URI location = java.net.URI.create("/platform/restaurants/" + resp.id());
+        return ResponseEntity.created(location).body(resp); // 201
     }
 
     /**
      * POST /platform/restaurants/{id}/suspend?reason=
-     * Suspende un restaurante por ID. Idempotente (si ya está SUSPENDED, no cambia estado).
+     * Suspende un restaurante por ID (idempotente).
+     * → 200 OK devolviendo la representación actualizada
      */
     @PostMapping("/{id}/suspend")
-    public RestaurantPublicResponse suspendById(
+    public ResponseEntity<RestaurantPublicResponse> suspendById(
             @PathVariable @Min(1) Long id,
             @RequestParam(required = false) @Size(max = 255) String reason) {
-        var cmd = webMapper.toSuspendByIdCommand(id, reason); // delega construcción del command
-        var view = suspendUseCase.suspend(cmd);
-        return webMapper.toResponse(view);
+
+        SuspendRestaurantCommand cmd = webMapper.toSuspendByIdCommand(id, reason);
+        RestaurantView view = suspendUseCase.suspend(cmd);
+        return ResponseEntity.ok(webMapper.toResponse(view)); // 200
     }
 
+    // Unsuspend by id → 200 OK
     @PostMapping("/{id}/unsuspend")
-    public RestaurantPublicResponse unsuspendById(@PathVariable @Min(1) Long id) {
-        var cmd = webMapper.toUnsuspendByIdCommand(id); // delega construcción del command
-        var view = unsuspendUseCase.unsuspend(cmd);
-        return webMapper.toResponse(view);
+    public ResponseEntity<RestaurantPublicResponse> unsuspendById(@PathVariable @Min(1) Long id) {
+        UnsuspendRestaurantCommand cmd = webMapper.toUnsuspendByIdCommand(id);
+        RestaurantView view = unsuspendUseCase.unsuspend(cmd);
+        return ResponseEntity.ok(webMapper.toResponse(view)); // 200
     }
 
     /**
      * POST /platform/restaurants/slug/{slug}/suspend?reason=
-     * Suspende un restaurante por slug (kebab-case).
+     * Suspende por slug.
+     * → 200 OK devolviendo la representación actualizada
      */
     @PostMapping("/slug/{slug}/suspend")
-    public RestaurantPublicResponse suspendBySlug(
-            @PathVariable
-            @Size(min = 1, max = 140)
-            @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG)
-            String slug,
+    public ResponseEntity<RestaurantPublicResponse> suspendBySlug(
+            @PathVariable @Size(min = 1, max = 140) @Pattern(regexp = com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.validation.Patterns.SLUG) String slug,
             @RequestParam(required = false) @Size(max = 255) String reason) {
-        var cmd = webMapper.toSuspendBySlugCommand(slug, reason); // delega construcción del command
-        var view = suspendUseCase.suspend(cmd);
-        return webMapper.toResponse(view);
-    }
 
-    // helpers
-
-    // Normaliza "OPEN,CLOSED" -> ["OPEN","CLOSED"]; deja null si vacío.
-    private List<String> normalizeStatuses(List<String> raw) {
-        if (raw == null || raw.isEmpty()) return null;
-        return raw.stream()
-                .flatMap(s -> List.of(s.split(",")).stream())
-                .map(String::trim)
-                .filter(v -> !v.isEmpty())
-                .toList();
+        SuspendRestaurantCommand cmd = webMapper.toSuspendBySlugCommand(slug, reason);
+        RestaurantView view = suspendUseCase.suspend(cmd);
+        return ResponseEntity.ok(webMapper.toResponse(view)); // 200
     }
 }

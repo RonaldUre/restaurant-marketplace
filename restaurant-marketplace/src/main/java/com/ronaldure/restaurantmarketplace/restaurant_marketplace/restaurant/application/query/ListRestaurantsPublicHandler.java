@@ -6,10 +6,10 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantCardView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
-import org.springframework.stereotype.Component;
+import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-@Component
+@Service
 public class ListRestaurantsPublicHandler implements ListRestaurantsPublicQuery {
 
     private final PublicRestaurantQuery publicRestaurantQuery;

@@ -1,6 +1,8 @@
 // src/main/java/.../infrastructure/web/RestaurantAdminController.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UpdateOpeningHoursCommand;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UpdateRestaurantProfileCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.CloseRestaurantUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.GetMyRestaurantDetailQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.OpenRestaurantUseCase;
@@ -12,6 +14,8 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.inf
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantPublicResponse;
 
 import jakarta.validation.Valid;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -28,11 +32,11 @@ public class RestaurantAdminController {
     private final RestaurantWebMapper webMapper;
 
     public RestaurantAdminController(UpdateRestaurantProfileUseCase updateProfileUseCase,
-            OpenRestaurantUseCase openRestaurantUseCase,
-            CloseRestaurantUseCase closeRestaurantUseCase,
-            GetMyRestaurantDetailQuery getMyRestaurantDetailQuery,
-            UpdateOpeningHoursUseCase updateOpeningHoursUseCase,
-            RestaurantWebMapper webMapper) {
+                                     OpenRestaurantUseCase openRestaurantUseCase,
+                                     CloseRestaurantUseCase closeRestaurantUseCase,
+                                     GetMyRestaurantDetailQuery getMyRestaurantDetailQuery,
+                                     UpdateOpeningHoursUseCase updateOpeningHoursUseCase,
+                                     RestaurantWebMapper webMapper) {
         this.updateProfileUseCase = updateProfileUseCase;
         this.openRestaurantUseCase = openRestaurantUseCase;
         this.closeRestaurantUseCase = closeRestaurantUseCase;
@@ -41,30 +45,37 @@ public class RestaurantAdminController {
         this.webMapper = webMapper;
     }
 
+    // Update profile → 200 OK (devuelve representación actualizada)
     @PutMapping("/profile")
-    public RestaurantPublicResponse updateProfile(@RequestBody @Valid UpdateRestaurantProfileRequest body) {
-        var cmd = webMapper.toCommand(body);
-        return webMapper.toResponse(updateProfileUseCase.update(cmd));
+    public ResponseEntity<RestaurantPublicResponse> updateProfile(@RequestBody @Valid UpdateRestaurantProfileRequest body) {
+        UpdateRestaurantProfileCommand cmd = webMapper.toCommand(body);
+        RestaurantPublicResponse resp = webMapper.toResponse(updateProfileUseCase.update(cmd));
+        return ResponseEntity.ok(resp); // 200
     }
 
+    // Open → 200 OK (acción con body resultante)
     @PostMapping("/open")
-    public RestaurantPublicResponse open() {
-        return webMapper.toResponse(openRestaurantUseCase.open());
+    public ResponseEntity<RestaurantPublicResponse> open() {
+        return ResponseEntity.ok(webMapper.toResponse(openRestaurantUseCase.open())); // 200
     }
 
+    // Close → 200 OK (acción con body resultante)
     @PostMapping("/close")
-    public RestaurantPublicResponse close() {
-        return webMapper.toResponse(closeRestaurantUseCase.close());
+    public ResponseEntity<RestaurantPublicResponse> close() {
+        return ResponseEntity.ok(webMapper.toResponse(closeRestaurantUseCase.close())); // 200
     }
 
+    // Me (detalle del tenant actual) → 200 OK
     @GetMapping("/me")
-    public RestaurantPublicResponse me() {
-        return webMapper.toResponse(getMyRestaurantDetailQuery.get());
+    public ResponseEntity<RestaurantPublicResponse> me() {
+        return ResponseEntity.ok(webMapper.toResponse(getMyRestaurantDetailQuery.get())); // 200
     }
 
+    // Update opening hours → 200 OK
     @PutMapping("/opening-hours")
-    public RestaurantPublicResponse updateOpeningHours(@RequestBody @Valid UpdateOpeningHoursRequest body) {
-        var cmd = webMapper.toCommand(body);
-        return webMapper.toResponse(updateOpeningHoursUseCase.update(cmd));
+    public ResponseEntity<RestaurantPublicResponse> updateOpeningHours(@RequestBody @Valid UpdateOpeningHoursRequest body) {
+        UpdateOpeningHoursCommand cmd = webMapper.toCommand(body);
+        RestaurantPublicResponse resp = webMapper.toResponse(updateOpeningHoursUseCase.update(cmd));
+        return ResponseEntity.ok(resp); // 200
     }
 }

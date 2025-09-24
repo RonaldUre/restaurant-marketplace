@@ -1,17 +1,20 @@
 // src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/catalog/infrastructure/web/ProductAdminController.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.command.CreateProductCommand;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.command.UpdateProductCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.ports.in.*;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.query.ListProductsAdminQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.ProductAdminCardView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.ProductAdminDetailView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.mapper.ProductWebMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.*;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.request.CreateProductRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.request.ListProductsAdminRequest;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response.ProductAdminCardResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response.ProductAdminDetailResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.annotation.Validated;
@@ -33,12 +36,12 @@ public class ProductAdminController {
     private final ProductWebMapper webMapper;
 
     public ProductAdminController(CreateProductUseCase createProduct,
-            UpdateProductUseCase updateProduct,
-            PublishProductUseCase publishProduct,
-            UnpublishProductUseCase unpublishProduct,
-            GetProductAdminQuery getProductAdmin,
-            ListProductsAdminQuery listProductsAdmin,
-            ProductWebMapper webMapper) {
+                                  UpdateProductUseCase updateProduct,
+                                  PublishProductUseCase publishProduct,
+                                  UnpublishProductUseCase unpublishProduct,
+                                  GetProductAdminQuery getProductAdmin,
+                                  ListProductsAdminQuery listProductsAdmin,
+                                  ProductWebMapper webMapper) {
         this.createProduct = createProduct;
         this.updateProduct = updateProduct;
         this.publishProduct = publishProduct;
@@ -48,54 +51,54 @@ public class ProductAdminController {
         this.webMapper = webMapper;
     }
 
-    // Create (usa DTO de request + validación)
+    // Create → 201 Created + Location
     @PostMapping
     public ResponseEntity<ProductAdminDetailResponse> create(@RequestBody @Valid CreateProductRequest body) {
-        var cmd = webMapper.toCommand(body);
+        CreateProductCommand cmd = webMapper.toCommand(body);
         ProductAdminDetailView view = createProduct.create(cmd);
-        return ResponseEntity.ok(webMapper.toAdminDetailResponse(view));
+        ProductAdminDetailResponse resp = webMapper.toAdminDetailResponse(view);
+
+        java.net.URI location = java.net.URI.create("/admin/products/" + resp.id());
+        return ResponseEntity.created(location).body(resp);
     }
 
-    // Update (id por path + DTO de request)
+    // Update → 200 OK
     @PutMapping("/{id}")
     public ResponseEntity<ProductAdminDetailResponse> update(@PathVariable("id") Long id,
-            @RequestBody @Valid UpdateProductRequest body) {
-        var cmd = webMapper.toCommand(id, body);
+                                                             @RequestBody @Valid UpdateProductRequest body) {
+        UpdateProductCommand cmd = webMapper.toCommand(id, body);
         ProductAdminDetailView view = updateProduct.update(cmd);
         return ResponseEntity.ok(webMapper.toAdminDetailResponse(view));
     }
 
-    // Publish
+    // Publish → 200 OK
     @PostMapping("/{id}/publish")
-    public ResponseEntity<Void> publish(@PathVariable("id") Long id) {
-        publishProduct.publish(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ProductAdminDetailResponse> publish(@PathVariable("id") Long id) {
+        ProductAdminDetailView view = publishProduct.publish(id);
+        return ResponseEntity.ok(webMapper.toAdminDetailResponse(view));
     }
 
-    // Unpublish
+    // Unpublish → 200 OK
     @PostMapping("/{id}/unpublish")
-    public ResponseEntity<Void> unpublish(@PathVariable("id") Long id) {
-        unpublishProduct.unpublish(id);
-        return ResponseEntity.noContent().build();
+    public ResponseEntity<ProductAdminDetailResponse> unpublish(@PathVariable("id") Long id) {
+        ProductAdminDetailView view = unpublishProduct.unpublish(id);
+        return ResponseEntity.ok(webMapper.toAdminDetailResponse(view));
     }
 
-    // Detail
+    // Detail → 200 OK
     @GetMapping("/{id}")
     public ResponseEntity<ProductAdminDetailResponse> get(@PathVariable("id") Long id) {
         ProductAdminDetailView view = getProductAdmin.get(id);
         return ResponseEntity.ok(webMapper.toAdminDetailResponse(view));
     }
 
-    // List (admin) — DTO para query params + paginación aparte
+    // List (admin) → 200 OK
     @GetMapping
     public ResponseEntity<PageResponse<ProductAdminCardResponse>> list(
-            @Valid @ModelAttribute ListProductsAdminRequest query,
-            @RequestParam(value = "page", defaultValue = "0") @Min(0) int page,
-            @RequestParam(value = "size", defaultValue = "20") @Min(1) @Max(200) int size) {
-        ListProductsAdminQueryParams params = webMapper.toParams(query);
-        var pageReq = new PageRequest(page, size);
+            @Valid @ModelAttribute ListProductsAdminRequest query) {
 
-        PageResponse<ProductAdminCardView> result = listProductsAdmin.list(params, pageReq);
+        ListProductsAdminQueryParams params = webMapper.toParams(query);
+        PageResponse<ProductAdminCardView> result = listProductsAdmin.list(params);
 
         List<ProductAdminCardResponse> items = result.items().stream()
                 .map(webMapper::toAdminCardResponse)
