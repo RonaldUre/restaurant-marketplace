@@ -56,7 +56,7 @@ public final class InventoryItem {
         this.createdAt = createdAt != null ? createdAt : Instant.now();
         this.updatedAt = updatedAt != null ? updatedAt : Instant.now();
 
-        validateInvariants();
+        validateInvariants(); 
     }
 
     /** Factory: limited stock */
