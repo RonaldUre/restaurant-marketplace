@@ -5,7 +5,7 @@ import jakarta.validation.constraints.Size;
 
 /** Request para listado público con paginación y filtro opcional por ciudad. */
 public record ListRestaurantsPublicRequest(
-        @Min(0) int page,
-        @Min(1) int size,
+        @Min(0) Integer page,
+        @Min(1) Integer size,
         @Size(min = 1, max = 120) String city
 ) {}

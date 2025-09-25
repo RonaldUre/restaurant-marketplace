@@ -115,18 +115,24 @@ public class RestaurantWebMapper {
     // --- Public listing (paginación + ciudad opcional) ---
     public ListRestaurantsPublicQueryParams toQueryParams(ListRestaurantsPublicRequest dto) {
         Objects.requireNonNull(dto, "request is required");
+        int page = (dto.page() == null) ? 0 : Math.max(dto.page(), 0);
+        int size = (dto.size() == null) ? 10 : Math.max(dto.size(), 1);
         return new ListRestaurantsPublicQueryParams(
-                Math.max(dto.page(), 0),
-                Math.max(dto.size(), 1),
+                page,
+                size,
                 safeTrimOrNull(dto.city()));
     }
 
     // --- Platform listing (filtros + orden + rango de fechas) ---
     public ListRestaurantsPlatformQueryParams toQueryParams(ListRestaurantsPlatformRequest dto) {
         Objects.requireNonNull(dto, "request is required");
+
+        int page = (dto.page() == null) ? 0 : Math.max(dto.page(), 0);
+        int size = (dto.size() == null) ? 10 : Math.max(dto.size(), 1);
+
         return new ListRestaurantsPlatformQueryParams(
-                Math.max(dto.page(), 0),
-                Math.max(dto.size(), 1),
+                page,
+                size,
                 normalizeStatuses(dto.statuses()),
                 safeTrimOrNull(dto.city()),
                 safeTrimOrNull(dto.q()),
@@ -145,7 +151,7 @@ public class RestaurantWebMapper {
         return new SuspendRestaurantCommand(id, null, reason);
     }
 
-        /** NUEVO: construir command para suspender por slug. */
+    /** NUEVO: construir command para suspender por slug. */
     public SuspendRestaurantCommand toSuspendBySlugCommand(String slug, String reason) {
         return new SuspendRestaurantCommand(null, slug, reason);
     }

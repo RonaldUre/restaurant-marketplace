@@ -50,8 +50,7 @@ public class RestaurantPublicController {
     public ResponseEntity<PageResponse<RestaurantCardResponse>> list(
             @Valid @ModelAttribute ListRestaurantsPublicRequest req) {
 
-        ListRestaurantsPublicQueryParams params =
-                new ListRestaurantsPublicQueryParams(req.page(), req.size(), req.city());
+        ListRestaurantsPublicQueryParams params = webMapper.toQueryParams(req);
 
         PageResponse<RestaurantCardView> result = listQuery.list(params);
 

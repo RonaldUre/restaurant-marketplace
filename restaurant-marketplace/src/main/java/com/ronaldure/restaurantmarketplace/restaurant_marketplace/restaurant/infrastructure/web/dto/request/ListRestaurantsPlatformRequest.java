@@ -9,8 +9,8 @@ import java.util.List;
 
 /** Request para listado de plataforma (SUPER_ADMIN) con filtros y orden. */
 public record ListRestaurantsPlatformRequest(
-        @Min(0) int page,
-        @Min(1) int size,
+        @Min(0) Integer page,
+        @Min(1) Integer size,
         List<String> statuses,                 // acepta "OPEN,CLOSED" o múltiples
         @Size(min = 1, max = 120) String city,
         @Size(min = 1, max = 120) String q,
