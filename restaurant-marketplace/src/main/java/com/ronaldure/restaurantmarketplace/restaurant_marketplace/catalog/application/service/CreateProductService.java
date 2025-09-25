@@ -10,6 +10,8 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.applic
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.application.view.ProductAdminDetailView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.Product;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.model.vo.Sku;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.events.DomainEventPublisher;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.events.ProductCreatedEvent;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.AccessControl;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.CurrentTenantProvider;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.security.Roles;
@@ -22,20 +24,23 @@ public class CreateProductService implements CreateProductUseCase {
 
     private final ProductRepository productRepository;
     private final ProductFactory productFactory;
+    private final DomainEventPublisher events;
     private final ProductApplicationMapper mapper;
     private final CurrentTenantProvider tenantProvider;
     private final AccessControl accessControl;
 
     public CreateProductService(ProductRepository productRepository,
-                                ProductFactory productFactory,
-                                ProductApplicationMapper mapper,
-                                CurrentTenantProvider tenantProvider,
-                                AccessControl accessControl) {
+            ProductFactory productFactory,
+            ProductApplicationMapper mapper,
+            CurrentTenantProvider tenantProvider,
+            AccessControl accessControl,
+            DomainEventPublisher events) {
         this.productRepository = productRepository;
         this.productFactory = productFactory;
         this.mapper = mapper;
         this.tenantProvider = tenantProvider;
         this.accessControl = accessControl;
+        this.events = events;
     }
 
     @Override
@@ -55,6 +60,10 @@ public class CreateProductService implements CreateProductUseCase {
         // 4) Build aggregate and persist
         Product product = productFactory.createNew(tenantId, command);
         Product saved = productRepository.save(product);
+
+        // 5) Publish event que sera consumido en inventory para crearlo 
+        events.publish(new ProductCreatedEvent(
+                saved.tenantId().value(), saved.id().value()));
 
         // 5) Map to admin detail view
         return mapper.toAdminDetail(saved);
