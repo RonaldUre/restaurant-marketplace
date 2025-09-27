@@ -4,7 +4,6 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.app
 /** Admin-only. Positive delta increases available, negative decreases (limited only). */
 public record AdjustStockCommand(
         Long productId,
-        Integer delta,         
-        String reason          // optional, can be null
+        Integer delta   // optional, can be null
 ) { }
 
