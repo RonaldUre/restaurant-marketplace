@@ -1,7 +1,9 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.exception;
 
+import jakarta.persistence.OptimisticLockException;
 import jakarta.validation.ConstraintViolationException;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.dao.OptimisticLockingFailureException;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
@@ -24,8 +26,10 @@ import java.util.stream.Collectors;
 
 /**
  * Global HTTP exception mapper (agnóstico de módulos).
- * - Traduce validaciones, binding, protocolo HTTP, capa de datos y fallbacks genéricos.
- * - No conoce excepciones de negocio de módulos específicos (esas van en sus handlers locales).
+ * - Traduce validaciones, binding, protocolo HTTP, capa de datos y fallbacks
+ * genéricos.
+ * - No conoce excepciones de negocio de módulos específicos (esas van en sus
+ * handlers locales).
  * - Formato de error unificado: ApiError (code, message, timestamp).
  */
 @ControllerAdvice
@@ -110,8 +114,7 @@ public class GlobalExceptionHandler {
         return new ResponseEntity<>(
                 ApiError.of("METHOD_NOT_ALLOWED", "Method not allowed"),
                 headers,
-                HttpStatus.METHOD_NOT_ALLOWED
-        );
+                HttpStatus.METHOD_NOT_ALLOWED);
     }
 
     @ExceptionHandler(NoHandlerFoundException.class)
@@ -160,10 +163,21 @@ public class GlobalExceptionHandler {
                 .body(ApiError.of("UNEXPECTED_ERROR", "Unexpected error"));
     }
 
+    // Conflictos de concurrencia (optimistic lock) => 409
+    @ExceptionHandler({ OptimisticLockingFailureException.class, OptimisticLockException.class })
+    public ResponseEntity<ApiError> handleOptimistic(Object ex) {
+        String message = (ex instanceof Exception e && e.getMessage() != null)
+                ? e.getMessage()
+                : "Concurrent update detected. Please retry.";
+        return ResponseEntity.status(HttpStatus.CONFLICT)
+                .body(ApiError.of("INVENTORY_CONFLICT_RETRY", message));
+    }
+
     // ---------- Helpers ----------
 
     private String safeMsg(@Nullable String msg) {
-        if (msg == null) return null;
+        if (msg == null)
+            return null;
         return msg.replaceAll("[\\r\\n]+", " ").trim();
     }
 }

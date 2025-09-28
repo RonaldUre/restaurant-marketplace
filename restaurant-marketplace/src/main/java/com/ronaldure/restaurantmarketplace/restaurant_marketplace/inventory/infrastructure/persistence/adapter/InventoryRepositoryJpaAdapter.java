@@ -1,6 +1,7 @@
 // src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/inventory/infrastructure/persistence/adapter/InventoryRepositoryJpaAdapter.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.infrastructure.persistence.adapter;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.model.vo.ProductId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.ports.out.InventoryRepository;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.domain.InventoryItem;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.domain.model.vo.InventoryItemId;
@@ -12,6 +13,7 @@ import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.Optional;
 
 /** JPA adapter (optimistic locking). Atomic SQL ops no-op en este MVP. */
@@ -22,7 +24,7 @@ public class InventoryRepositoryJpaAdapter implements InventoryRepository {
     private final InventoryPersistenceMapper mapper;
 
     public InventoryRepositoryJpaAdapter(InventoryJpaRepository jpa,
-                                         InventoryPersistenceMapper mapper) {
+            InventoryPersistenceMapper mapper) {
         this.jpa = jpa;
         this.mapper = mapper;
     }
@@ -37,33 +39,39 @@ public class InventoryRepositoryJpaAdapter implements InventoryRepository {
 
     @Override
     @Transactional
-    public InventoryItem createUnlimitedIfAbsent(TenantId tenantId, Long productId) {
-        // Fast path: si existe, devuélvelo
-        Optional<JpaInventoryEntity> existing =
-                jpa.findByTenantIdAndProductId(tenantId.value(), productId);
-        if (existing.isPresent()) return mapper.toDomain(existing.get());
+    public InventoryItem createUnlimitedIfAbsent(TenantId tenantId, ProductId productId) {
+        // 0) Defensas rápidas (los VO ya validan >0, aquí validamos no-nulos)
+        Objects.requireNonNull(tenantId, "tenantId is required");
+        Objects.requireNonNull(productId, "productId is required");
 
-        // Intento de creación; si choca UNIQUE, leemos el que ya existe
-        JpaInventoryEntity e = new JpaInventoryEntity(
-                null,
+        // 1) Fast path: si existe, devuélvelo
+        Optional<JpaInventoryEntity> existing = jpa.findByTenantIdAndProductId(tenantId.value(), productId.value());
+        if (existing.isPresent()) {
+            return mapper.toDomain(existing.get()); // mapper debe mapear id técnico también
+        }
+
+        // 2) Intento de creación; 'available = NULL' => unlimited (política de stock)
+        JpaInventoryEntity entity = new JpaInventoryEntity(
+                null, // id (auto)
                 tenantId.value(),
-                productId,
-                null,   // available = NULL => unlimited
-                0,      // reserved
-                0,      // version (JPA lo maneja)
+                productId.value(),
+                null, // available = NULL => unlimited
+                0, // reserved
+                null, // version => que JPA @Version lo maneje
                 null,
-                null
-        );
+                null);
+
         try {
-            JpaInventoryEntity saved = jpa.save(e);
-            InventoryItem domain = mapper.toDomain(saved);
-            // asignar id técnico al aggregate por paridad
-            domain.assignId(InventoryItemId.of(saved.getId()));
-            return domain;
+            JpaInventoryEntity saved = jpa.save(entity);
+            // fuerza el flush aquí para capturar violación UNIQUE dentro del try/catch
+            jpa.flush();
+
+            return mapper.toDomain(saved); // el mapper debe propagar saved.getId()
         } catch (DataIntegrityViolationException dup) {
-            // Carrera entre threads/instancias: leer el existente
+            // Carrera entre threads/instancias: alguien lo insertó antes que nosotros
             return mapper.toDomain(
-                    jpa.findByTenantIdAndProductId(tenantId.value(), productId).orElseThrow()
+                    jpa.findByTenantIdAndProductId(tenantId.value(), productId.value())
+                            .orElseThrow(() -> dup) // extremadamente raro que no esté
             );
         }
     }
@@ -86,12 +94,36 @@ public class InventoryRepositoryJpaAdapter implements InventoryRepository {
         return rehydrated;
     }
 
-    // --- Atomic ops (no usadas en MVP; devolvemos false para indicar no soportado) ---
+    // --- Atomic ops (no usadas en MVP; devolvemos false para indicar no soportado)
+    // ---
 
-    @Override public boolean reserveAtomic(TenantId t, Long p, int qty) { return false; }
-    @Override public boolean confirmAtomic(TenantId t, Long p, int qty) { return false; }
-    @Override public boolean releaseAtomic(TenantId t, Long p, int qty) { return false; }
-    @Override public boolean adjustAtomic(TenantId t, Long p, int d)   { return false; }
-    @Override public boolean switchToLimited(TenantId t, Long p, int i) { return false; }
-    @Override public boolean switchToUnlimited(TenantId t, Long p)      { return false; }
+    @Override
+    public boolean reserveAtomic(TenantId t, Long p, int qty) {
+        return false;
+    }
+
+    @Override
+    public boolean confirmAtomic(TenantId t, Long p, int qty) {
+        return false;
+    }
+
+    @Override
+    public boolean releaseAtomic(TenantId t, Long p, int qty) {
+        return false;
+    }
+
+    @Override
+    public boolean adjustAtomic(TenantId t, Long p, int d) {
+        return false;
+    }
+
+    @Override
+    public boolean switchToLimited(TenantId t, Long p, int i) {
+        return false;
+    }
+
+    @Override
+    public boolean switchToUnlimited(TenantId t, Long p) {
+        return false;
+    }
 }

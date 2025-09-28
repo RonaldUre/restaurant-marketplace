@@ -61,9 +61,8 @@ public class CreateProductService implements CreateProductUseCase {
         Product product = productFactory.createNew(tenantId, command);
         Product saved = productRepository.save(product);
 
-        // 5) Publish event que sera consumido en inventory para crearlo 
-        events.publish(new ProductCreatedEvent(
-                saved.tenantId().value(), saved.id().value()));
+        // 5) Publish event que sera consumido en inventory para crearlo
+        events.publish(ProductCreatedEvent.of(saved.tenantId(), saved.id()));
 
         // 5) Map to admin detail view
         return mapper.toAdminDetail(saved);

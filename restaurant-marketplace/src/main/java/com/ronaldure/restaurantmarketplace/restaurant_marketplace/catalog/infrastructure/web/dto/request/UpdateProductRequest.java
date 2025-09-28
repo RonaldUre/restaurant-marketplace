@@ -1,5 +1,5 @@
 // src/main/java/.../catalog/infrastructure/web/dto/UpdateProductRequest.java
-package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.request;
 
 import jakarta.validation.constraints.*;
 import java.math.BigDecimal;

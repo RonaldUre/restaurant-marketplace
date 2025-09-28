@@ -1,5 +1,6 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.ports.out;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.model.vo.ProductId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.domain.InventoryItem;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 
@@ -10,7 +11,7 @@ public interface InventoryRepository {
     // Bootstrap / existencia
     boolean existsByTenantAndProduct(TenantId tenantId, Long productId);
 
-    InventoryItem createUnlimitedIfAbsent(TenantId tenantId, Long productId);
+    InventoryItem createUnlimitedIfAbsent(TenantId tenantId, ProductId productId);
 
     Optional<InventoryItem> findByTenantAndProduct(TenantId tenantId, Long productId);
 
