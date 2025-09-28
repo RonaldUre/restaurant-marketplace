@@ -2,6 +2,7 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.app
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.command.AdjustStockCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.errors.InventoryItemNotFoundException;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.errors.InventoryOperationNotAllowedException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.mapper.InventoryApplicationMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.ports.in.AdjustStockUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.ports.out.CatalogOwnershipQuery;
@@ -28,10 +29,10 @@ public class AdjustStockService implements AdjustStockUseCase {
     private final AccessControl accessControl;
 
     public AdjustStockService(InventoryRepository repo,
-                              CatalogOwnershipQuery catalog,
-                              InventoryApplicationMapper mapper,
-                              CurrentTenantProvider tenantProvider,
-                              AccessControl accessControl) {
+            CatalogOwnershipQuery catalog,
+            InventoryApplicationMapper mapper,
+            CurrentTenantProvider tenantProvider,
+            AccessControl accessControl) {
         this.repo = repo;
         this.catalog = catalog;
         this.mapper = mapper;
@@ -50,12 +51,19 @@ public class AdjustStockService implements AdjustStockUseCase {
         }
 
         // Prefer atomic SQL if your adapter supports it:
-        // if (repo.adjustAtomic(tenantId, command.productId(), command.delta())) { ... }
+        // if (repo.adjustAtomic(tenantId, command.productId(), command.delta())) { ...
+        // }
 
         InventoryItem updated = withRetry(() -> {
             InventoryItem item = repo.findByTenantAndProduct(tenantId, command.productId())
                     .orElseThrow(() -> new InventoryItemNotFoundException(command.productId()));
+
+            if (item.available() == null) {
+                throw InventoryOperationNotAllowedException.cannotAdjustUnlimited(command.productId());
+            }
+
             item.adjust(command.delta());
+
             return repo.save(item);
         });
 
@@ -70,7 +78,8 @@ public class AdjustStockService implements AdjustStockUseCase {
             try {
                 return op.get();
             } catch (OptimisticLockingFailureException ex) {
-                if (++attempts >= 3) throw ex;
+                if (++attempts >= 3)
+                    throw ex;
             }
         }
     }

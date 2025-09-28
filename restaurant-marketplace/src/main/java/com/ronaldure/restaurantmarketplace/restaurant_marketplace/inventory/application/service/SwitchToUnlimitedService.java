@@ -2,6 +2,7 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.app
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.command.SwitchToUnlimitedCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.errors.InventoryItemNotFoundException;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.errors.InventoryOperationNotAllowedException;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.mapper.InventoryApplicationMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.ports.in.SwitchToUnlimitedUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.ports.out.CatalogOwnershipQuery;
@@ -25,10 +26,10 @@ public class SwitchToUnlimitedService implements SwitchToUnlimitedUseCase {
     private final AccessControl accessControl;
 
     public SwitchToUnlimitedService(InventoryRepository repo,
-                                    CatalogOwnershipQuery catalog,
-                                    InventoryApplicationMapper mapper,
-                                    CurrentTenantProvider tenantProvider,
-                                    AccessControl accessControl) {
+            CatalogOwnershipQuery catalog,
+            InventoryApplicationMapper mapper,
+            CurrentTenantProvider tenantProvider,
+            AccessControl accessControl) {
         this.repo = repo;
         this.catalog = catalog;
         this.mapper = mapper;
@@ -48,6 +49,10 @@ public class SwitchToUnlimitedService implements SwitchToUnlimitedUseCase {
 
         InventoryItem item = repo.findByTenantAndProduct(tenantId, command.productId())
                 .orElseThrow(() -> new InventoryItemNotFoundException(command.productId()));
+
+        if (item.reserved().value() > 0) {
+            throw InventoryOperationNotAllowedException.cannotSwitchToUnlimitedWithReservations(command.productId());
+        }
 
         item.switchToUnlimited(); // throws if reserved > 0
         InventoryItem saved = repo.save(item);

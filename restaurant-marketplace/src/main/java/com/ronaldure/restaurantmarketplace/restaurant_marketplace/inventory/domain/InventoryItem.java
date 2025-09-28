@@ -56,7 +56,7 @@ public final class InventoryItem {
         this.createdAt = createdAt != null ? createdAt : Instant.now();
         this.updatedAt = updatedAt != null ? updatedAt : Instant.now();
 
-        validateInvariants(); 
+        validateInvariants();
     }
 
     /** Factory: limited stock */
@@ -112,16 +112,23 @@ public final class InventoryItem {
 
     /** Admin-only: adjust available by delta (limited only). */
     public void adjust(int delta) {
-        if (this.available == null) {
+
+        // Evita NPE por unboxing accidental
+        final Integer availBoxed = this.available;
+        if (availBoxed == null) {
             throw new IllegalStateException("Cannot adjust unlimited stock");
         }
-        long next = (long) this.available + (long) delta;
-        if (next < 0) {
+
+        int current = availBoxed.intValue();
+        
+        long next = (long) current + (long) delta;
+
+        if (next < 0)
             throw new IllegalStateException("Available cannot be negative");
-        }
-        if (next < this.reserved.value()) {
+        if (next > Integer.MAX_VALUE)
+            throw new IllegalStateException("Available overflow");
+        if (next < this.reserved.value())
             throw new IllegalStateException("Available cannot be less than reserved");
-        }
         this.available = (int) next;
         touch();
         validateInvariants();

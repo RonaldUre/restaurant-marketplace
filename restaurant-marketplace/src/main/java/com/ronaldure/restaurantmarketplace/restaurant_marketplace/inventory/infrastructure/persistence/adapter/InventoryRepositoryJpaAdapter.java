@@ -4,7 +4,6 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.inf
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.domain.model.vo.ProductId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.application.ports.out.InventoryRepository;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.domain.InventoryItem;
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.domain.model.vo.InventoryItemId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.infrastructure.persistence.entity.JpaInventoryEntity;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.infrastructure.persistence.mapper.InventoryPersistenceMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.infrastructure.persistence.repository.InventoryJpaRepository;
@@ -84,15 +83,37 @@ public class InventoryRepositoryJpaAdapter implements InventoryRepository {
 
     // --- Mutaciones con locking optimista ---
 
-    @Override
-    @Transactional
-    public InventoryItem save(InventoryItem item) {
-        JpaInventoryEntity entity = mapper.toEntity(item);
-        JpaInventoryEntity saved = jpa.save(entity); // @Version maneja conflictos
-        InventoryItem rehydrated = mapper.toDomain(saved);
-        rehydrated.assignId(InventoryItemId.of(saved.getId()));
-        return rehydrated;
+@Override
+@Transactional
+public InventoryItem save(InventoryItem item) {
+    // 1) Cargar entidad gestionada con su @Version actual
+    JpaInventoryEntity managed;
+
+    if (item.id() != null) {
+        // Si el agregado ya trae id técnico, úsalo
+        managed = jpa.findById(item.id().value())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Inventory row not found by id=" + item.id().value()
+                ));
+    } else {
+        // Fallback por identidad de negocio (tenant + product)
+        managed = jpa.findByTenantIdAndProductId(item.tenantId().value(), item.productId().value())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Inventory row not found for tenant=" + item.tenantId().value()
+                        + " product=" + item.productId().value()
+                ));
     }
+
+    // 2) Copiar SOLO campos mutables (deja que JPA maneje version/fechas)
+    managed.setAvailable(item.available());                 // null => unlimited
+    managed.setReserved(item.reserved().value());           // >= 0
+
+    // 3) Guardar/flush (opcional; por ser managed bastaría con flush al final de la TX)
+    JpaInventoryEntity saved = jpa.save(managed);
+
+    // 4) Volver a dominio rehidratado (ya trae id y timestamps correctos)
+    return mapper.toDomain(saved);
+}
 
     // --- Atomic ops (no usadas en MVP; devolvemos false para indicar no soportado)
     // ---
