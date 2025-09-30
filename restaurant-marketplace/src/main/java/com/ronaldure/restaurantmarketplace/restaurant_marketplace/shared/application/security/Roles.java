@@ -13,8 +13,8 @@ public final class Roles {
     // ----- Core roles -----
     public static final String RESTAURANT_ADMIN = "RESTAURANT_ADMIN";
     public static final String SUPER_ADMIN = "SUPER_ADMIN";
+    public static final String CUSTOMER = "CUSTOMER";
 
     // (Optional) if you plan to add more, define them here:
-    // public static final String CUSTOMER = "CUSTOMER";
     // public static final String SUPPORT = "SUPPORT";
 }
