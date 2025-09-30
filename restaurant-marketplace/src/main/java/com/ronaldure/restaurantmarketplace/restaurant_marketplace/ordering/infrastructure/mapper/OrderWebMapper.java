@@ -32,27 +32,32 @@ public class OrderWebMapper {
 
     // ---------- Web -> App (commands) ----------
 
-    /** Si recibes el Idempotency-Key también por header, pásalo aquí y tendrá prioridad sobre el body. */
+    /**
+     * If the Idempotency-Key is also received via header, prefer it over body.
+     */
     public PlaceOrderCommand toCommand(PlaceOrderRequest req, String idempotencyKeyHeader) {
         String key = firstNonBlank(idempotencyKeyHeader, req.idempotencyKey());
         List<PlaceOrderCommand.Item> items = req.items().stream()
                 .map(i -> new PlaceOrderCommand.Item(i.productId(), i.qty()))
                 .toList();
+
+        // FIX: respect PlaceOrderCommand signature: (restaurantId, items, paymentMethod, idempotencyKey)
         return new PlaceOrderCommand(
                 req.restaurantId(),
+                items,
                 req.paymentMethod(),
-                nullIfBlank(key),
-                items
+                nullIfBlank(key)
         );
     }
 
-    /** Versión simple si no manejas header para idempotencia. */
+    /** Convenience overload when no header is handled. */
     public PlaceOrderCommand toCommand(PlaceOrderRequest req) {
         return toCommand(req, null);
     }
 
     public ConfirmPaymentCommand toCommand(ConfirmPaymentRequest req) {
-        return new ConfirmPaymentCommand(req.orderId());
+        // FIX: ConfirmPaymentCommand requires (orderId, transactionId). For MVP we pass null.
+        return new ConfirmPaymentCommand(req.orderId(), null);
     }
 
     public CancelOrderCommand toCommand(CancelOrderRequest req) {
@@ -62,7 +67,6 @@ public class OrderWebMapper {
     // ---------- Web -> App (query params) ----------
 
     public ListOrdersAdminQueryParams toParams(ListOrdersAdminRequest req) {
-        // Puedes delegar al helper del propio request
         return req.toQueryParams();
     }
 
@@ -73,7 +77,6 @@ public class OrderWebMapper {
     }
 
     private static String firstNonBlank(String a, String b) {
-        if (a != null && !a.isBlank()) return a;
-        return b;
+        return (a != null && !a.isBlank()) ? a : b;
     }
 }
