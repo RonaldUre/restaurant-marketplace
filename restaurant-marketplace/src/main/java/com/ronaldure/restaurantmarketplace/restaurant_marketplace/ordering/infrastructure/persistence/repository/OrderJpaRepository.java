@@ -1,11 +1,11 @@
 ﻿// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/persistence/repository/OrderJpaRepository.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.repository;
 
-import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.projections.OrderTenantProjection;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo.OrderStatus;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.entity.JpaOrderEntity;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.projection.OrderAdminCardProjection;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.projection.OrderAdminDetailProjection;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.projection.OrderBasicProjection;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.projection.OrderPublicDetailProjection;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -60,5 +60,5 @@ public interface OrderJpaRepository extends JpaRepository<JpaOrderEntity, Long> 
             Pageable pageable
     );
 
-    Optional<OrderTenantProjection> findProjectedById(Long id);
+    Optional<OrderBasicProjection> findProjectedById(Long id);
 }
