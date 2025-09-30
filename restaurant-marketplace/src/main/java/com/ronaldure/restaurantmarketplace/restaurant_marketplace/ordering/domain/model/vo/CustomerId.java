@@ -14,7 +14,7 @@ public final class CustomerId {
     }
 
     public static CustomerId of(long value){ return new CustomerId(value); }
-    public static CustomerId from(UserId userId){ return new CustomerId(Integer.parseInt(userId.value())); }
+    public static CustomerId from(UserId userId){ return new CustomerId(Long.parseLong(userId.value())); }
     public long value(){ return value; }
 
     @Override public boolean equals(Object o){ return (o instanceof CustomerId) && ((CustomerId)o).value == value; }
