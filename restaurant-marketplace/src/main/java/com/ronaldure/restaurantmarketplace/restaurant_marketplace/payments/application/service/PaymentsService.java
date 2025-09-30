@@ -4,12 +4,12 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domai
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.domain.PaymentTransaction;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.view.PaymentTransactionView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.repository.PaymentTransactionJpaRepository;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.entity.JpaPaymentTransactionEntity;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.mapper.PaymentsPersistenceMapper;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.vo.Money;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
-
 
 @Service
 public class PaymentsService {
@@ -17,7 +17,7 @@ public class PaymentsService {
   private final PaymentsPersistenceMapper mapper;
 
   public PaymentsService(PaymentTransactionJpaRepository repo,
-                         PaymentsPersistenceMapper mapper) {
+      PaymentsPersistenceMapper mapper) {
     this.repo = repo;
     this.mapper = mapper;
   }
@@ -28,35 +28,49 @@ public class PaymentsService {
   }
 
   @Transactional
-  public PaymentTransactionView recordApproved(OrderId orderId, TenantId tenantId, Money amount, String method, String txId) {
+  public PaymentTransactionView recordApproved(OrderId orderId, TenantId tenantId, Money amount, String method,
+      String txId) {
     return upsert(PaymentTransaction.approved(orderId, tenantId, amount, method, txId));
   }
 
   @Transactional
-  public PaymentTransactionView recordDeclined(OrderId orderId, TenantId tenantId, Money amount, String method, String reason) {
+  public PaymentTransactionView recordDeclined(OrderId orderId, TenantId tenantId, Money amount, String method,
+      String reason) {
     return upsert(PaymentTransaction.declined(orderId, tenantId, amount, method, reason));
   }
 
   private PaymentTransactionView upsert(PaymentTransaction tx) {
-    var existing = repo.findByOrderId(tx.orderId().value()).orElse(null);
-    if (existing == null) {
-      repo.save(mapper.toNewEntity(tx));
+    var existingOpt = repo.findByOrderId(tx.orderId().value());
+    JpaPaymentTransactionEntity persisted;
+
+    if (existingOpt.isEmpty()) {
+      persisted = repo.save(mapper.toNewEntity(tx)); // @PrePersist setea createdAt real
     } else {
-      // Precedencia: APPROVED > DECLINED > INITIATED
+      var existing = existingOpt.get();
       var current = existing.getStatus();
+
       if ("APPROVED".equals(current)) {
         // No pisar un aprobado
+        persisted = existing;
       } else if ("DECLINED".equals(current) && tx.status() == PaymentTransaction.Status.INITIATED) {
         // No degradar
+        persisted = existing;
       } else {
         mapper.apply(existing, tx);
-        repo.save(existing);
+        persisted = repo.save(existing);
       }
     }
+
     return PaymentTransactionView.of(
-      tx.orderId().value(), tx.tenantId().value(),
-      tx.amount().amount(), tx.amount().currency(),
-      tx.method(), tx.status().name(), tx.txId(), tx.reason(), tx.createdAt()
+        persisted.getOrderId(),
+        persisted.getTenantId(),
+        persisted.getAmount(),
+        persisted.getCurrency(),
+        persisted.getMethod(),
+        persisted.getStatus(),
+        persisted.getTxId(),
+        persisted.getReason(),
+        persisted.getCreatedAt() // ← ahora viene de DB
     );
   }
 }
