@@ -44,7 +44,7 @@ public final class CustomerFactory {
             phone = cmd.phone().isBlank() ? Phone.empty() : Phone.of(cmd.phone());
         }
 
-        return new UpdateProfilePayload(cmd.customerId(), name, phone);
+        return new UpdateProfilePayload(name, phone);
     }
 
     private static Phone normalizePhoneForCreate(String raw) {
@@ -54,7 +54,6 @@ public final class CustomerFactory {
 
     /** Payload parcial para update; los campos null significan “no cambiar”. */
     public record UpdateProfilePayload(
-            Long customerId,
             Name name,   // null => no cambiar nombre
             Phone phone  // null => no cambiar; Phone.empty() => quitar teléfono
     ) {}

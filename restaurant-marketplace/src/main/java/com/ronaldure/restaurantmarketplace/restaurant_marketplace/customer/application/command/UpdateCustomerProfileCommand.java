@@ -7,7 +7,6 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.customer.appl
  * - phone: opcional; null/"" significa “sin teléfono”.
  */
 public record UpdateCustomerProfileCommand(
-        Long customerId,
         String name,
         String phone
 ) { }

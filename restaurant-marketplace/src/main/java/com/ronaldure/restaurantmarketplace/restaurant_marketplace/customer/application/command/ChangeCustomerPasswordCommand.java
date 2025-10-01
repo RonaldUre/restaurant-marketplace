@@ -7,7 +7,6 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.customer.appl
  * - newPassword: nueva contraseña en texto plano (se hashea en service).
  */
 public record ChangeCustomerPasswordCommand(
-        Long customerId,
         String currentPassword,
         String newPassword
 ) { }

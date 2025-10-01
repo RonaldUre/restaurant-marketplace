@@ -1,6 +1,7 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.customer.application.ports.out;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.customer.domain.Customer;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.customer.domain.model.vo.Email;
 
 import java.util.Optional;
 
@@ -25,7 +26,7 @@ public interface CustomerRepository {
 
     Optional<Customer> findById(Long id);
 
-    Optional<Customer> findByEmail(String email);
+    Optional<Customer> findByEmail(Email email);
 
-    boolean existsByEmail(String email);
+    boolean existsByEmail(Email email);
 }
