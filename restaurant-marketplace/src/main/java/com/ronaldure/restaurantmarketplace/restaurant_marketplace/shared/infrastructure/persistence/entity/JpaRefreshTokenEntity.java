@@ -43,6 +43,9 @@ public class JpaRefreshTokenEntity {
     @Column(name = "user_agent", length = 255)
     private String userAgent;
 
+    @Column(name = "subject_type", nullable = false, length = 16)
+    private String subjectType;
+
     // Getters / Setters (no Lombok to keep consistency)
     public Long getId() {
         return id;
@@ -126,5 +129,13 @@ public class JpaRefreshTokenEntity {
 
     public void setUserAgent(String userAgent) {
         this.userAgent = userAgent;
+    }
+
+    public String getSubjectType() {
+        return subjectType;
+    }
+
+    public void setSubjectType(String subjectType) {
+        this.subjectType = subjectType;
     }
 }

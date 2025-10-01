@@ -17,6 +17,7 @@ public interface RefreshTokenJpaRepository extends JpaRepository<JpaRefreshToken
     Optional<JpaRefreshTokenEntity> findByJti(String jti);
 
     List<JpaRefreshTokenEntity> findAllByUserIdAndRevokedFalse(Long userId);
+    List<JpaRefreshTokenEntity> findAllByUserIdAndSubjectTypeAndRevokedFalse(Long userId, String subjectType);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("select r from JpaRefreshTokenEntity r where r.jti = :jti")
