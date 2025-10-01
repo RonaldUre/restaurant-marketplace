@@ -52,7 +52,7 @@ public class SecurityConfig {
                         .requestMatchers("/auth/refresh").permitAll()
                         .requestMatchers("/auth/logout").permitAll()
                         .requestMatchers("/auth/login/customer").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/customers/register").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/public/customers").permitAll()
                         // Public read
                         .requestMatchers(HttpMethod.GET, "/public/restaurants/**").permitAll()
                         .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
