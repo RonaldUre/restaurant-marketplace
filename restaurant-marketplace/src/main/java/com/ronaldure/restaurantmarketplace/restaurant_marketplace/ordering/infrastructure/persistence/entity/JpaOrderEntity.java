@@ -10,6 +10,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
 
+import org.hibernate.annotations.DynamicUpdate;
+
 @Entity
 @Table(
     name = "orders",
@@ -18,6 +20,7 @@ import java.util.Objects;
         @Index(name = "idx_orders_customer_created", columnList = "customer_id,created_at")
     }
 )
+@DynamicUpdate
 public class JpaOrderEntity {
 
     @Id

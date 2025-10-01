@@ -7,7 +7,10 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-@RestControllerAdvice(basePackages = "com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications")
+@RestControllerAdvice(basePackages = { 
+        "com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications",
+        "com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.web"
+})
 public class NotificationExceptionHandler {
 
     @ExceptionHandler(NotificationFailedException.class)

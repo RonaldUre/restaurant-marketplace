@@ -27,12 +27,29 @@ public class OrderRepositoryJpaAdapter implements OrderRepository {
     @Override
     @Transactional
     public Order save(Order order) {
-        JpaOrderEntity entity = mapper.toEntity(order);
-        JpaOrderEntity saved = jpa.save(entity);
-        // Assign generated id to aggregate if needed
-        if (order.id() == null && saved.getId() != null) {
-            order.assignId(OrderId.of(saved.getId()));
+        // CREATE (sin id): mapear raíz + líneas
+        if (order.id() == null) {
+            JpaOrderEntity e = mapper.toEntityForCreate(order);
+            JpaOrderEntity saved = jpa.save(e);
+
+            // Propagar id generado al agregado
+            if (saved.getId() != null) {
+                order.assignId(OrderId.of(saved.getId()));
+            }
+            return mapper.toDomain(saved);
         }
+
+        // UPDATE (con id): cargar entidad gestionada y copiar solo campos mutables de
+        // la raíz
+        // Tip: si quieres blindar por tenant, usa findByIdAndTenantId(...)
+        JpaOrderEntity managed = jpa.findByIdAndTenantId(order.id().value(), order.tenantId().value())
+                .orElseThrow(() -> new IllegalStateException(
+                        "Order not found id=" + order.id().value() + " tenant=" + order.tenantId().value()));
+
+        // No tocar la colección de lines para evitar DELETE/INSERT en TX B
+        mapper.copyMutableFieldsExceptLines(managed, order);
+
+        JpaOrderEntity saved = jpa.save(managed);
         return mapper.toDomain(saved);
     }
 

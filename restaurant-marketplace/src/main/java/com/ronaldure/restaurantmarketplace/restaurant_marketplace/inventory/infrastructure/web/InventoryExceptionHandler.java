@@ -13,7 +13,10 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 /**
  * Inventory-specific exception handler.
  */
-@RestControllerAdvice(basePackages = "com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory")
+@RestControllerAdvice(basePackages = {
+  "com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory",
+  "com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.web"
+})
 public class InventoryExceptionHandler {
 
     @ExceptionHandler(InventoryItemNotFoundException.class)

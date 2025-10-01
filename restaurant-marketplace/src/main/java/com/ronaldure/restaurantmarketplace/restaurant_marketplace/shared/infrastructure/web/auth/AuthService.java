@@ -42,7 +42,7 @@ public class AuthService {
         }
 
         Role role = Role.valueOf(u.getRole());
-        if (role != Role.RESTAURANT_ADMIN && role != Role.SUPER_ADMIN) {
+        if (role != Role.RESTAURANT_ADMIN && role != Role.SUPER_ADMIN && role != Role.CUSTOMER) {
             throw new IllegalStateException("Unsupported role for this login flow: " + role);
         }
 
