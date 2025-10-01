@@ -20,7 +20,7 @@ public class CustomerDirectoryJpaAdapter implements CustomerDirectoryPort {
     public String getCustomerEmail(UserId customerId) {
         try {
             return jdbc.queryForObject(
-                    "SELECT email FROM users WHERE id = ?",
+                    "SELECT email FROM customers WHERE id = ?",
                     String.class,
                     Long.parseLong(customerId.value())
             );
