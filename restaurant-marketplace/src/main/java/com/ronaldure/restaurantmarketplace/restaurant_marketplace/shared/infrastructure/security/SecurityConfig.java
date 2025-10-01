@@ -34,39 +34,42 @@ public class SecurityConfig {
 
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
-                                           JwtAuthenticationFilter jwtAuthenticationFilter,
-                                           SecurityMdcFilter securityMdcFilter,
-                                           AuthenticationEntryPoint authEntryPoint,
-                                           AccessDeniedHandler accessDeniedHandler) throws Exception {
+            JwtAuthenticationFilter jwtAuthenticationFilter,
+            SecurityMdcFilter securityMdcFilter,
+            AuthenticationEntryPoint authEntryPoint,
+            AccessDeniedHandler accessDeniedHandler) throws Exception {
 
         http
-            .cors(Customizer.withDefaults())
-            .csrf(csrf -> csrf.disable())
-            .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
-            .exceptionHandling(ex -> ex
-                .authenticationEntryPoint(authEntryPoint)
-                .accessDeniedHandler(accessDeniedHandler)
-            )
-            .authorizeHttpRequests(auth -> auth
-                // Login endpoints
-                .requestMatchers("/auth/login/**").permitAll()
-                .requestMatchers("/auth/refresh").permitAll()
-                .requestMatchers("/auth/logout").permitAll() 
-                // Public read
-                .requestMatchers(HttpMethod.GET, "/public/restaurants/**").permitAll()
-                .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
-                // Orders for customers
-                .requestMatchers(HttpMethod.POST, "/orders").hasRole("CUSTOMER")
-                .requestMatchers(HttpMethod.GET, "/orders/**").hasRole("CUSTOMER")
-                // Admin tenant routes
-                .requestMatchers("/admin/**").hasRole("RESTAURANT_ADMIN")
-                // Platform routes
-                .requestMatchers("/platform/**").hasRole("SUPER_ADMIN")
-                // OpenAPI / Actuator (adjust as needed)
-                .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/actuator/health").permitAll()
-                // Everything else requires auth
-                .anyRequest().authenticated()
-            );
+                .cors(Customizer.withDefaults())
+                .csrf(csrf -> csrf.disable())
+                .sessionManagement(sm -> sm.sessionCreationPolicy(SessionCreationPolicy.STATELESS))
+                .exceptionHandling(ex -> ex
+                        .authenticationEntryPoint(authEntryPoint)
+                        .accessDeniedHandler(accessDeniedHandler))
+                .authorizeHttpRequests(auth -> auth
+                        // Login endpoints
+                        .requestMatchers("/auth/login/**").permitAll()
+                        .requestMatchers("/auth/refresh").permitAll()
+                        .requestMatchers("/auth/logout").permitAll()
+                        .requestMatchers("/auth/login/customer").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/customers/register").permitAll()
+                        // Public read
+                        .requestMatchers(HttpMethod.GET, "/public/restaurants/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/restaurants/**").permitAll()
+                        // Orders for customers
+                        .requestMatchers(HttpMethod.POST, "/orders").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/orders/**").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.GET, "/customers/me").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.PUT, "/customers/me").hasRole("CUSTOMER")
+                        .requestMatchers(HttpMethod.POST, "/customers/password").hasRole("CUSTOMER")
+                        // Admin tenant routes
+                        .requestMatchers("/admin/**").hasRole("RESTAURANT_ADMIN")
+                        // Platform routes
+                        .requestMatchers("/platform/**").hasRole("SUPER_ADMIN")
+                        // OpenAPI / Actuator (adjust as needed)
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/actuator/health").permitAll()
+                        // Everything else requires auth
+                        .anyRequest().authenticated());
 
         // Order: JWT first, then MDC after authentication is set
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);

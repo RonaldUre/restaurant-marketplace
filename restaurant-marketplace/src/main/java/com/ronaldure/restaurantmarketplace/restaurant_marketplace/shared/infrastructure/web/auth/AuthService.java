@@ -1,5 +1,7 @@
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.web.auth;
 
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.customer.infrastructure.persistence.entity.JpaCustomerEntity;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.customer.infrastructure.persistence.repository.CustomerJpaRepository;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.Role;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.persistence.entity.JpaUserEntity;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.infrastructure.persistence.repository.UserAuthJpaRepository;
@@ -15,15 +17,18 @@ import java.util.List;
 public class AuthService {
 
     private final UserAuthJpaRepository users;
+    private final CustomerJpaRepository customers;
     private final PasswordEncoder passwordEncoder;
     private final RefreshTokenService refreshTokens;
     private final long ttlSeconds; // TTL del access token (en segundos)
 
     public AuthService(UserAuthJpaRepository users,
-                       PasswordEncoder passwordEncoder,
-                       RefreshTokenService refreshTokens,
-                       @Value("${jwt.accessTokenTtlMinutes:15}") long ttlMinutes) {
+            CustomerJpaRepository customers,
+            PasswordEncoder passwordEncoder,
+            RefreshTokenService refreshTokens,
+            @Value("${jwt.accessTokenTtlMinutes:15}") long ttlMinutes) {
         this.users = users;
+        this.customers = customers;   
         this.passwordEncoder = passwordEncoder;
         this.refreshTokens = refreshTokens;
         this.ttlSeconds = ttlMinutes * 60;
@@ -51,15 +56,15 @@ public class AuthService {
         // Emite y persiste refresh; genera access token corto
         var pair = refreshTokens.issueOnLogin(u.getId(), List.of(role), tenantId,
                 (ip == null || ip.isBlank()) ? "unknown" : ip,
-                (userAgent == null || userAgent.isBlank()) ? "unknown" : userAgent
-        );
+                (userAgent == null || userAgent.isBlank()) ? "unknown" : userAgent);
 
         return new LoginResult(pair.accessToken(), pair.refreshToken(), ttlSeconds);
     }
 
     /**
      * Overload temporal para compatibilidad con el controller actual.
-     * Devuelve SOLO el access token (como antes). En cuanto actualicemos el controller
+     * Devuelve SOLO el access token (como antes). En cuanto actualicemos el
+     * controller
      * para responder ambos tokens, elimina este método.
      */
     public String loginAdmin(String email, String rawPassword) {
@@ -67,10 +72,39 @@ public class AuthService {
         return res.accessToken(); // mantiene comportamiento previo (solo access)
     }
 
+    public LoginResult loginCustomer(String email, String rawPassword, String ip, String userAgent) {
+        JpaCustomerEntity c = customers.findByEmailIgnoreCase(email) // usa el finder que tengas definido
+                .orElseThrow(() -> new IllegalArgumentException("Invalid credentials"));
+
+        if (!passwordEncoder.matches(rawPassword, c.getPasswordHash())) {
+            throw new IllegalArgumentException("Invalid credentials");
+        }
+
+        // Emite y persiste RT; genera access corto. Rol fijo CUSTOMER; sin tenant.
+        var pair = refreshTokens.issueOnLogin(
+                c.getId(),
+                java.util.List.of(Role.CUSTOMER),
+                null, // tenantId
+                (ip == null || ip.isBlank()) ? "unknown" : ip,
+                (userAgent == null || userAgent.isBlank()) ? "unknown" : userAgent);
+
+        return new LoginResult(pair.accessToken(), pair.refreshToken(), ttlSeconds);
+    }
+
+    /**
+     * Overload de compatibilidad (solo access) — igual que loginAdmin(String,
+     * String).
+     */
+    public String loginCustomer(String email, String rawPassword) {
+        var res = loginCustomer(email, rawPassword, "unknown", "unknown");
+        return res.accessToken();
+    }
+
     public long getTtlSeconds() {
         return ttlSeconds;
     }
 
     /** Resultado de login: tokens y TTL del access. */
-    public record LoginResult(String accessToken, String refreshToken, long accessTtlSeconds) {}
+    public record LoginResult(String accessToken, String refreshToken, long accessTtlSeconds) {
+    }
 }
