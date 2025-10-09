@@ -1,4 +1,4 @@
-﻿// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/application/mapper/OrderApplicationMapper.java
+// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/application/mapper/OrderApplicationMapper.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.mapper;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.view.OrderCardView;

@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.web.dto.request;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.web.dto.request;
 
 import jakarta.validation.constraints.Size;
 import com.fasterxml.jackson.annotation.JsonInclude;

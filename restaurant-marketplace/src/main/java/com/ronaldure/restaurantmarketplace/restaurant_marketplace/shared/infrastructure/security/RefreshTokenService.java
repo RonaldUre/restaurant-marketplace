@@ -20,6 +20,7 @@ public class RefreshTokenService {
 
     private final RefreshTokenCodec refreshCodec;
     private final RefreshTokenJpaRepository refreshRepo;
+    private final UserAuthJpaRepository usersRepo;
     private final JwtTokenGenerator accessTokenGenerator; // reuse access token generator
 
     public record TokensPair(String accessToken, String refreshToken) {}
@@ -32,11 +33,12 @@ public class RefreshTokenService {
         this.refreshCodec = refreshCodec;
         this.refreshRepo = refreshRepo;
         this.accessTokenGenerator = accessTokenGenerator;
+        this.usersRepo = usersRepo;
     }
 
     /** Issues refresh+access at login and persists the RT with a hash and subject type. */
     @Transactional
-    public TokensPair issueOnLogin(Long userId, List<Role> roles, Long tenantId, String ip, String userAgent) {
+    public TokensPair issueOnLogin(Long userId, String email, List<Role> roles, Long tenantId, String ip, String userAgent) {
         // 0) Decide subject type (namespace between admin and customer sessions)
         String subjectType = resolveSubjectType(roles);
 
@@ -58,7 +60,7 @@ public class RefreshTokenService {
         refreshRepo.save(e);
 
         // 3) Generate short-lived access token
-        String access = accessTokenGenerator.generate(String.valueOf(userId), roles, tenantId);
+        String access = accessTokenGenerator.generate(String.valueOf(userId), email, roles, tenantId);
 
         return new TokensPair(access, refresh);
     }
@@ -102,6 +104,9 @@ public class RefreshTokenService {
         Long tenantId = null;
         try { tenantId = claims.tenantId(); } catch (Exception ignored) {}
 
+         var user = usersRepo.findById(userId)
+                .orElseThrow(() -> new SecurityException("User not found for refresh token: " + userId));
+
         // 1) Generate new refresh with a new jti
         String newJti = UUID.randomUUID().toString();
         String newRefresh = refreshCodec.generate(claims.userId(), List.copyOf(roles), tenantId, newJti);
@@ -124,7 +129,7 @@ public class RefreshTokenService {
         refreshRepo.save(row);
 
         // 4) Issue new access token
-        String newAccess = accessTokenGenerator.generate(String.valueOf(userId), List.copyOf(roles), tenantId);
+        String newAccess = accessTokenGenerator.generate(String.valueOf(userId),user.getEmail(), List.copyOf(roles), tenantId);
 
         return new TokensPair(newAccess, newRefresh);
     }

@@ -54,7 +54,7 @@ public class AuthService {
         Long tenantId = (role == Role.RESTAURANT_ADMIN) ? u.getTenantId() : null;
 
         // Emite y persiste refresh; genera access token corto
-        var pair = refreshTokens.issueOnLogin(u.getId(), List.of(role), tenantId,
+        var pair = refreshTokens.issueOnLogin(u.getId(), u.getEmail(), List.of(role), tenantId,
                 (ip == null || ip.isBlank()) ? "unknown" : ip,
                 (userAgent == null || userAgent.isBlank()) ? "unknown" : userAgent);
 
@@ -83,6 +83,7 @@ public class AuthService {
         // Emite y persiste RT; genera access corto. Rol fijo CUSTOMER; sin tenant.
         var pair = refreshTokens.issueOnLogin(
                 c.getId(),
+                c.getEmail(),
                 java.util.List.of(Role.CUSTOMER),
                 null, // tenantId
                 (ip == null || ip.isBlank()) ? "unknown" : ip,

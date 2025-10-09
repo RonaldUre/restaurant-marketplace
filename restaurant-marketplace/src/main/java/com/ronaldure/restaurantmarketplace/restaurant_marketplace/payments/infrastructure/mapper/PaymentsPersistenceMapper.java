@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.mapper;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.mapper;
 
 import org.springframework.stereotype.Component;
 

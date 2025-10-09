@@ -1,4 +1,4 @@
-﻿// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/web/OrderExceptionHandler.java
+// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/web/OrderExceptionHandler.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.web;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.errors.*;

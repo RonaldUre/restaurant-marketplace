@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.view;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.view;
 
 import java.math.BigDecimal;
 import java.time.Instant;

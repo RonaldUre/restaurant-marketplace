@@ -36,7 +36,7 @@ public class JwtTokenGenerator {
         this.accessTtlMinutes = accessTtlMinutes;
     }
 
-    public String generate(String userId, List<Role> roles, Long tenantId) {
+    public String generate(String userId, String email, List<Role> roles, Long tenantId) {
         try {
             Instant now = Instant.now();
             Instant exp = now.plus(accessTtlMinutes, ChronoUnit.MINUTES);
@@ -49,6 +49,10 @@ public class JwtTokenGenerator {
                     .expirationTime(Date.from(exp))
                     .claim("roles", roles.stream().map(Enum::name).toList());
 
+            if (email != null && !email.isBlank()) {
+                b.claim("email", email);
+            }
+            
             if (tenantId != null) {
                 b.claim("tenantId", tenantId);
             }

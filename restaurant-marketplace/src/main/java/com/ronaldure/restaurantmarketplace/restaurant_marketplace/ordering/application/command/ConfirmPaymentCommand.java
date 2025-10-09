@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.command;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.command;
 
 /**
  * Command para confirmar pago de un pedido.

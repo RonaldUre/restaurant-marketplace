@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.entity;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.entity;
 
 import jakarta.persistence.*;
 import java.math.BigDecimal;

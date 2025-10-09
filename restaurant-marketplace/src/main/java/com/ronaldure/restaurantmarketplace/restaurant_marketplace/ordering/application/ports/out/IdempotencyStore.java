@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.UserId;

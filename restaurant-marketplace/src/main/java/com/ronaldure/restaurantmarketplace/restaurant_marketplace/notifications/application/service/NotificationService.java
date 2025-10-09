@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.application.service;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.application.service;
 
 import org.springframework.stereotype.Service;
 

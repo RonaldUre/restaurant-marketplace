@@ -1,4 +1,4 @@
-﻿// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/persistence/projection/OrderAdminDetailProjection.java
+// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/persistence/projection/OrderAdminDetailProjection.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.projection;
 
 import java.math.BigDecimal;

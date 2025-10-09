@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.mapper;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.mapper;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.entity.JpaNotificationEntity;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.web.dto.response.NotificationLogResponse;

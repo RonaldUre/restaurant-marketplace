@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.Order;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo.OrderId;

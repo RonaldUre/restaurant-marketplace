@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.web.dto.response;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.web.dto.response;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.view.OrderCardView;
 

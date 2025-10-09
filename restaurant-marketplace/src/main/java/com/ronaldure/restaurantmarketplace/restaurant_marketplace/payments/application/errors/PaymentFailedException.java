@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.errors;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.errors;
 
 public class PaymentFailedException extends RuntimeException {
     public PaymentFailedException(String reason) {

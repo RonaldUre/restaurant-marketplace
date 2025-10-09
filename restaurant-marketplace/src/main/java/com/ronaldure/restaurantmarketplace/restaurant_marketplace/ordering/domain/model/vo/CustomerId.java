@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.UserId;
 

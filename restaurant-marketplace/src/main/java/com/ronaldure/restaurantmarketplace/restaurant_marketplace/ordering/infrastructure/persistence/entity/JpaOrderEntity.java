@@ -1,4 +1,4 @@
-﻿// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/persistence/entity/JpaOrderEntity.java
+// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/persistence/entity/JpaOrderEntity.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.entity;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo.OrderStatus;

@@ -1,4 +1,4 @@
-﻿// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/persistence/entity/JpaIdempotencyKeyEntity.java
+// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/infrastructure/persistence/entity/JpaIdempotencyKeyEntity.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.infrastructure.persistence.entity;
 
 import jakarta.persistence.*;

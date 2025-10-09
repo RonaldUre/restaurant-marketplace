@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo.*;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;

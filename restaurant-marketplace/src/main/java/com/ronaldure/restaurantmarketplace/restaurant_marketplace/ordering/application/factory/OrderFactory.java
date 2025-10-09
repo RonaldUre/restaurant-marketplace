@@ -1,4 +1,4 @@
-﻿// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/application/factory/OrderFactory.java
+// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/ordering/application/factory/OrderFactory.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.factory;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out.CatalogPricingPort;

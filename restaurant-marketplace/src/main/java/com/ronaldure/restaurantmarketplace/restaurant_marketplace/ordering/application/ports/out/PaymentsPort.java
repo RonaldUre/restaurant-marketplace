@@ -1,4 +1,4 @@
-﻿// ordering/application/ports/out/PaymentsPort.java
+// ordering/application/ports/out/PaymentsPort.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.security.TenantId;

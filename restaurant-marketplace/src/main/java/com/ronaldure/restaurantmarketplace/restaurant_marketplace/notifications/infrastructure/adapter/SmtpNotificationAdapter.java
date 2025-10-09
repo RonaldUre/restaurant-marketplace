@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.adapter;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.adapter;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.application.service.NotificationService;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.domain.NotificationStatus;
@@ -8,7 +8,6 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out.NotificationPort;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.context.annotation.Profile;
 import org.springframework.mail.SimpleMailMessage;
 import org.springframework.mail.javamail.JavaMailSender;
 import org.springframework.stereotype.Component;
@@ -18,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.Instant;
 
 @Component
-@Profile("!dev") // Este adaptador se activará en cualquier perfil que NO sea 'dev'
+
 public class SmtpNotificationAdapter implements NotificationPort {
 
     private static final Logger log = LoggerFactory.getLogger(SmtpNotificationAdapter.class);

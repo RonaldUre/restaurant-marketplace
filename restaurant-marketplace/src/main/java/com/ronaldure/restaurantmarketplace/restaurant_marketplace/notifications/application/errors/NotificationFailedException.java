@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.application.errors;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.application.errors;
 
 public class NotificationFailedException extends RuntimeException {
     public NotificationFailedException(String message) {

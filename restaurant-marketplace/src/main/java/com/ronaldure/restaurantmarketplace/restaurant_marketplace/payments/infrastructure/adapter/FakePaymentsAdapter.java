@@ -1,4 +1,4 @@
-﻿// payments/infrastructure/adapter/FakePaymentsAdapter.java
+// payments/infrastructure/adapter/FakePaymentsAdapter.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.adapter;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out.PaymentsPort;

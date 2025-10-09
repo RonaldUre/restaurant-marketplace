@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out;
 
 /** Envío de notificaciones al cliente. Implementado en `notifications`. */
 public interface NotificationPort {

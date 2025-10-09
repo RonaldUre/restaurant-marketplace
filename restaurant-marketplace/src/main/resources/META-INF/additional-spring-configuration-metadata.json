@@ -123,5 +123,45 @@
     "name": "paypal.sandbox.clientId",
     "type": "java.lang.String",
     "description": "A description for 'paypal.sandbox.clientId'"
+  },
+  {
+    "name": "jwt.secret",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.secret'"
+  },
+  {
+    "name": "jwt.audience",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.audience'"
+  },
+  {
+    "name": "jwt.accessTokenTtlSeconds",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.accessTokenTtlSeconds'"
+  },
+  {
+    "name": "jwt.accessTokenTtlSeconds",
+    "type": "java.lang.String",
+    "description": "A description for 'jwt.accessTokenTtlSeconds'"
+  },
+  {
+    "name": "twilio.account-sid",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.account-sid'"
+  },
+  {
+    "name": "twilio.auth-token",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.auth-token'"
+  },
+  {
+    "name": "twilio.sandbox-number",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.sandbox-number'"
+  },
+  {
+    "name": "twilio.sms-number",
+    "type": "java.lang.String",
+    "description": "A description for 'twilio.sms-number'"
   }
 ]}

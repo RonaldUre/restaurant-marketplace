@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.entity;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.entity;
 
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.domain.NotificationStatus;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.domain.NotificationType;

@@ -1,4 +1,4 @@
-﻿package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.web.dto.response;
+package com.ronaldure.restaurantmarketplace.restaurant_marketplace.notifications.infrastructure.web.dto.response;
 
 import com.fasterxml.jackson.annotation.JsonInclude;
 
