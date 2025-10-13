@@ -26,12 +26,12 @@ public class AuthService {
             CustomerJpaRepository customers,
             PasswordEncoder passwordEncoder,
             RefreshTokenService refreshTokens,
-            @Value("${jwt.accessTokenTtlMinutes:15}") long ttlMinutes) {
+            @Value("${jwt.accessTokenTtlSeconds}") long ttlSeconds) {
         this.users = users;
         this.customers = customers;   
         this.passwordEncoder = passwordEncoder;
         this.refreshTokens = refreshTokens;
-        this.ttlSeconds = ttlMinutes * 60;
+        this.ttlSeconds = ttlSeconds;
     }
 
     /**

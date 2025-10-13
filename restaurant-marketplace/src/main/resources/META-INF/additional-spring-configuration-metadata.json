@@ -19,11 +19,7 @@
     "type": "java.lang.String",
     "description": "A description for 'jwt.clockSkewSeconds'"
   },
-  {
-    "name": "jwt.accessTokenTtlMinutes",
-    "type": "java.lang.String",
-    "description": "A description for 'jwt.accessTokenTtlMinutes'"
-  },
+
   {
     "name": "security.cors.allowed-origins",
     "type": "java.lang.String",
@@ -69,20 +65,11 @@
     "type": "java.lang.String",
     "description": "A description for 'jwt.clockSkewSeconds'"
   },
-  {
-    "name": "jwt.accessTokenTtlMinutes",
-    "type": "java.lang.String",
-    "description": "A description for 'jwt.accessTokenTtlMinutes'"
-  },
+
   {
     "name": "jwt.clockSkewSeconds",
     "type": "java.lang.String",
     "description": "A description for 'jwt.clockSkewSeconds'"
-  },
-  {
-    "name": "jwt.accessTokenTtlMinutes",
-    "type": "java.lang.String",
-    "description": "A description for 'jwt.accessTokenTtlMinutes'"
   },
   {
     "name": "refresh.jwt.secret",

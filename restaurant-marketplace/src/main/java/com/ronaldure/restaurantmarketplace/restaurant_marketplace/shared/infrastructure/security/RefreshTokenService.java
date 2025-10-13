@@ -23,22 +23,27 @@ public class RefreshTokenService {
     private final UserAuthJpaRepository usersRepo;
     private final JwtTokenGenerator accessTokenGenerator; // reuse access token generator
 
-    public record TokensPair(String accessToken, String refreshToken) {}
+    public record TokensPair(String accessToken, String refreshToken) {
+    }
 
     public RefreshTokenService(RefreshTokenCodec refreshCodec,
-                               RefreshTokenJpaRepository refreshRepo,
-                               // kept for DI compatibility, not used here
-                               UserAuthJpaRepository usersRepo,
-                               JwtTokenGenerator accessTokenGenerator) {
+            RefreshTokenJpaRepository refreshRepo,
+            // kept for DI compatibility, not used here
+            UserAuthJpaRepository usersRepo,
+            JwtTokenGenerator accessTokenGenerator) {
         this.refreshCodec = refreshCodec;
         this.refreshRepo = refreshRepo;
         this.accessTokenGenerator = accessTokenGenerator;
         this.usersRepo = usersRepo;
     }
 
-    /** Issues refresh+access at login and persists the RT with a hash and subject type. */
+    /**
+     * Issues refresh+access at login and persists the RT with a hash and subject
+     * type.
+     */
     @Transactional
-    public TokensPair issueOnLogin(Long userId, String email, List<Role> roles, Long tenantId, String ip, String userAgent) {
+    public TokensPair issueOnLogin(Long userId, String email, List<Role> roles, Long tenantId, String ip,
+            String userAgent) {
         // 0) Decide subject type (namespace between admin and customer sessions)
         String subjectType = resolveSubjectType(roles);
 
@@ -67,7 +72,8 @@ public class RefreshTokenService {
 
     /**
      * Rotates a valid refresh ⇒ returns new access + new refresh.
-     * Handles reuse: on reuse, revoke all active RTs for the same (userId, subjectType).
+     * Handles reuse: on reuse, revoke all active RTs for the same (userId,
+     * subjectType).
      */
     @Transactional
     public TokensPair rotate(String rawRefresh, String ip, String userAgent) {
@@ -100,11 +106,15 @@ public class RefreshTokenService {
 
         // Roles and tenant from claims (we embedded them in the refresh)
         Set<Role> roles = EnumSet.noneOf(Role.class);
-        for (String r : claims.roles()) roles.add(Role.valueOf(r));
+        for (String r : claims.roles())
+            roles.add(Role.valueOf(r));
         Long tenantId = null;
-        try { tenantId = claims.tenantId(); } catch (Exception ignored) {}
+        try {
+            tenantId = claims.tenantId();
+        } catch (Exception ignored) {
+        }
 
-         var user = usersRepo.findById(userId)
+        var user = usersRepo.findById(userId)
                 .orElseThrow(() -> new SecurityException("User not found for refresh token: " + userId));
 
         // 1) Generate new refresh with a new jti
@@ -129,12 +139,16 @@ public class RefreshTokenService {
         refreshRepo.save(row);
 
         // 4) Issue new access token
-        String newAccess = accessTokenGenerator.generate(String.valueOf(userId),user.getEmail(), List.copyOf(roles), tenantId);
+        String newAccess = accessTokenGenerator.generate(String.valueOf(userId), user.getEmail(), List.copyOf(roles),
+                tenantId);
 
         return new TokensPair(newAccess, newRefresh);
     }
 
-    /** Revokes all active refresh tokens for the (userId, subjectType) tuple (used on reuse). */
+    /**
+     * Revokes all active refresh tokens for the (userId, subjectType) tuple (used
+     * on reuse).
+     */
     @Transactional
     public void revokeAllActiveForUser(Long userId, String subjectType) {
         var list = refreshRepo.findAllByUserIdAndSubjectTypeAndRevokedFalse(userId, subjectType);
@@ -146,7 +160,57 @@ public class RefreshTokenService {
     }
 
     @Transactional
-    public void logout(String rawRefresh, boolean revokeAllSessions) {
+    public void logout(String rawRefresh, String userIdFromAccessToken, boolean revokeAllSessions) {
+        // ... (el código para parsear el 'rawRefresh' y obtener 'claims' es el mismo)
+        RefreshTokenCodec.RefreshClaims claims;
+        try {
+            claims = refreshCodec.parseAndValidate(rawRefresh);
+        } catch (SecurityException ex) {
+            return; // Idempotente: nada que revocar
+        }
+
+        // ... (el código para encontrar el 'rowOpt' en el repo es el mismo)
+        var rowOpt = refreshRepo.findByJti(claims.jti());
+        if (rowOpt.isEmpty()) {
+            return; // Idempotente: ya no existe
+        }
+        var row = rowOpt.get();
+
+        // ✅ --- ¡LA NUEVA VALIDACIÓN DE SEGURIDAD! --- ✅
+        // Compara el dueño del refreshToken (en la DB) con el dueño del accessToken (de
+        // la petición).
+        try {
+            Long userIdFromToken = Long.parseLong(userIdFromAccessToken);
+            Long userIdFromDb = row.getUserId();
+
+            if (!Objects.equals(userIdFromDb, userIdFromToken)) {
+                // Ahora la comparación es entre dos Long, lo cual es correcto.
+                throw new SecurityException("Access token subject does not match refresh token owner.");
+            }
+        } catch (NumberFormatException e) {
+            // Si el subject del token no es un número, algo está muy mal.
+            throw new SecurityException("Invalid subject format in access token.", e);
+        }
+
+        // El resto de la lógica es la misma que ya tenías
+        String incomingHash = Sha256.hex(rawRefresh);
+        if (!Objects.equals(row.getTokenHash(), incomingHash)) {
+            return;
+        }
+        if (row.isRevoked() || row.getReplacedByJti() != null) {
+            return;
+        }
+
+        if (revokeAllSessions) {
+            revokeAllActiveForUser(row.getUserId(), row.getSubjectType());
+        } else {
+            row.setRevoked(true);
+            refreshRepo.save(row);
+        }
+    }
+
+    @Transactional
+    private void logout(String rawRefresh, boolean revokeAllSessions) {
         // 0) Parse claims; if invalid/expired, treat logout as success (idempotent)
         RefreshTokenCodec.RefreshClaims claims;
         try {
@@ -201,7 +265,8 @@ public class RefreshTokenService {
 
     /** Derives subject type from roles to namespace sessions. */
     private static String resolveSubjectType(List<Role> roles) {
-        // If the token has CUSTOMER, treat it as a customer session; otherwise it's an admin session.
+        // If the token has CUSTOMER, treat it as a customer session; otherwise it's an
+        // admin session.
         boolean isCustomer = roles != null && roles.stream().anyMatch(r -> r == Role.CUSTOMER);
         return isCustomer ? SUBJECT_CUSTOMER : SUBJECT_ADMIN;
     }

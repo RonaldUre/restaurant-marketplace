@@ -28,6 +28,11 @@ public class SecurityConfig {
     }
 
     @Bean
+    public ExpiredJwtFilter expiredJwtFilter(NimbusTokenDecoder nimbusTokenDecoder) {
+        return new ExpiredJwtFilter(nimbusTokenDecoder);
+    }
+
+    @Bean
     public SecurityMdcFilter securityMdcFilter(CurrentUserProvider currentUserProvider) {
         return new SecurityMdcFilter(currentUserProvider);
     }
@@ -35,6 +40,7 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http,
             JwtAuthenticationFilter jwtAuthenticationFilter,
+            ExpiredJwtFilter expiredJwtFilter,
             SecurityMdcFilter securityMdcFilter,
             AuthenticationEntryPoint authEntryPoint,
             AccessDeniedHandler accessDeniedHandler) throws Exception {
@@ -47,6 +53,7 @@ public class SecurityConfig {
                         .authenticationEntryPoint(authEntryPoint)
                         .accessDeniedHandler(accessDeniedHandler))
                 .authorizeHttpRequests(auth -> auth
+                        .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
                         // Login endpoints
                         .requestMatchers("/auth/login/**").permitAll()
                         .requestMatchers("/auth/refresh").permitAll()
@@ -72,6 +79,7 @@ public class SecurityConfig {
 
         // Order: JWT first, then MDC after authentication is set
         http.addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
+        http.addFilterBefore(expiredJwtFilter, JwtAuthenticationFilter.class);
         http.addFilterAfter(securityMdcFilter, JwtAuthenticationFilter.class);
 
         return http.build();

@@ -35,6 +35,11 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         final String header = request.getHeader(HttpHeaders.AUTHORIZATION);
         final boolean hasBearer = header != null && header.startsWith("Bearer ");
 
+        if (request.getRequestURI().equals("/auth/logout")) {
+            filterChain.doFilter(request, response);
+            return;
+        }
+
         try {
             if (!hasBearer) {
                 // sin token: continúa (permitAll/deny lo decidirá la capa de autorización)
@@ -102,7 +107,7 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private boolean isPlatformPath(String uri) {
         return "/platform".equals(uri) || uri.startsWith("/platform/");
     }
-    
+
     private void unauthorized(HttpServletResponse response, String msg) throws IOException {
         response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
         response.setContentType("application/json");
@@ -118,6 +123,5 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     private String sanitize(String in) {
         return in == null ? "" : in.replace("\"", "'");
     }
-
 
 }

@@ -22,24 +22,24 @@ public class JwtTokenGenerator {
     private final byte[] secret;
     private final String issuer;
     private final String audience;
-    private final long accessTtlMinutes;
+    private final long accessTtlSeconds;
 
     public JwtTokenGenerator(
             @Value("${jwt.secret}") String secret,
             @Value("${jwt.issuer}") String issuer,
             @Value("${jwt.audience}") String audience,
-            @Value("${jwt.accessTokenTtlMinutes:15}") long accessTtlMinutes
+            @Value("${jwt.accessTokenTtlSeconds}") long accessTtlSeconds
     ) {
         this.secret = Objects.requireNonNull(secret, "jwt.secret").getBytes(StandardCharsets.UTF_8);
         this.issuer = Objects.requireNonNull(issuer, "jwt.issuer");
         this.audience = Objects.requireNonNull(audience, "jwt.audience");
-        this.accessTtlMinutes = accessTtlMinutes;
+        this.accessTtlSeconds = accessTtlSeconds;
     }
 
     public String generate(String userId, String email, List<Role> roles, Long tenantId) {
         try {
             Instant now = Instant.now();
-            Instant exp = now.plus(accessTtlMinutes, ChronoUnit.MINUTES);
+            Instant exp = now.plus(accessTtlSeconds, ChronoUnit.SECONDS);
 
             JWTClaimsSet.Builder b = new JWTClaimsSet.Builder()
                     .subject(userId)
