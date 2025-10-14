@@ -3,9 +3,11 @@ package com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.in
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.out.PlatformRestaurantQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.ListRestaurantsPlatformQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.PlatformRestaurantCardView;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantForSelectView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.persistence.projection.PlatformRestaurantCardProjection;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.persistence.projection.PlatformRestaurantDetailProjection;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.persistence.projection.PlatformRestaurantSelectProjection;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.persistence.repository.PlatformRestaurantJpaRepository;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import org.springframework.data.domain.Page;
@@ -60,11 +62,21 @@ public class PlatformRestaurantQueryJpaAdapter implements PlatformRestaurantQuer
         return repo.getDetailById(id).map(this::toRestaurantView);
     }
 
+    @Override
+    public List<RestaurantForSelectView> listAllForSelect() { // ← NUEVO
+        List<PlatformRestaurantSelectProjection> rows = repo.findAllForSelect();
+        return rows.stream()
+                .map(r -> new RestaurantForSelectView(r.getId(), r.getName()))
+                .toList();
+    }
+
     private String safeTrimOrNull(String s) {
         if (s == null) return null;
         String t = s.trim();
         return t.isEmpty() ? null : t;
     }
+
+
 
     private PlatformRestaurantCardView toCardView(PlatformRestaurantCardProjection prj) {
         return new PlatformRestaurantCardView(

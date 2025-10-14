@@ -5,6 +5,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.SuspendRestaurantCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.command.UnsuspendRestaurantCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.GetRestaurantPlatformQuery;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.ListAllRestaurantsForSelectQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.ListRestaurantsPlatformQuery;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.RegisterRestaurantUseCase;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.ports.in.SuspendRestaurantUseCase;
@@ -16,6 +17,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.inf
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.ListRestaurantsPlatformRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.RegisterRestaurantRequest;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.PlatformRestaurantCardResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantForSelectResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantPublicResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.application.query.PageResponse;
 import jakarta.validation.Valid;
@@ -39,18 +41,21 @@ public class RestaurantPlatformController {
     private final GetRestaurantPlatformQuery getPlatformQuery;
     private final UnsuspendRestaurantUseCase unsuspendUseCase;
     private final RestaurantWebMapper webMapper;
+    private final ListAllRestaurantsForSelectQuery listAllForSelectQuery;
 
     public RestaurantPlatformController(RegisterRestaurantUseCase registerUseCase,
             SuspendRestaurantUseCase suspendUseCase,
             ListRestaurantsPlatformQuery listPlatformQuery,
             GetRestaurantPlatformQuery getPlatformQuery,
             UnsuspendRestaurantUseCase unsuspendUseCase,
-            RestaurantWebMapper webMapper) {
+            RestaurantWebMapper webMapper,
+            ListAllRestaurantsForSelectQuery listAllForSelectQuery) {
         this.registerUseCase = registerUseCase;
         this.suspendUseCase = suspendUseCase;
         this.listPlatformQuery = listPlatformQuery;
         this.getPlatformQuery = getPlatformQuery;
         this.unsuspendUseCase = unsuspendUseCase;
+        this.listAllForSelectQuery = listAllForSelectQuery;
         this.webMapper = webMapper;
     }
 
@@ -71,6 +76,13 @@ public class RestaurantPlatformController {
                 result.totalPages());
 
         return ResponseEntity.ok(body); // 200
+    }
+
+    @GetMapping("/select")
+    public ResponseEntity<List<RestaurantForSelectResponse>> listForSelect() {
+        var views = listAllForSelectQuery.list();
+        var body = webMapper.toResponseList(views);
+        return ResponseEntity.ok(body);
     }
 
     // Detail by id → 200 OK

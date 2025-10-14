@@ -6,10 +6,12 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.app
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.query.ListRestaurantsPublicQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.PlatformRestaurantCardView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantCardView;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantForSelectView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.application.view.RestaurantView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.request.*;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.PlatformRestaurantCardResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantCardResponse;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantForSelectResponse;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.restaurant.infrastructure.web.dto.response.RestaurantPublicResponse;
 
 import org.springframework.stereotype.Component;
@@ -46,6 +48,15 @@ public class RestaurantWebMapper {
     public PlatformRestaurantCardResponse toResponse(PlatformRestaurantCardView v) {
         return new PlatformRestaurantCardResponse(
                 v.id(), v.name(), v.slug(), v.status(), v.city(), v.createdAt());
+    }
+
+    public RestaurantForSelectResponse toResponse(RestaurantForSelectView v) { // ← NUEVO
+        return new RestaurantForSelectResponse(v.id(), v.name());
+    }
+
+    /** NEW: map list */
+    public List<RestaurantForSelectResponse> toResponseList(List<RestaurantForSelectView> views) { // ← NUEVO
+        return views.stream().map(this::toResponse).toList();
     }
 
     // ===========================
