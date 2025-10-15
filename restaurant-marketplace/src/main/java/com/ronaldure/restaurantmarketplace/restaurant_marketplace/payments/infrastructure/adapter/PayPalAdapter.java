@@ -6,6 +6,7 @@ import com.paypal.orders.*;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.ports.out.PaymentsPort;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo.OrderId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.service.PaymentsService;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.config.PaymentsRedirectProperties;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.shared.domain.vo.Money;
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
@@ -19,12 +20,15 @@ public class PayPalAdapter implements PaymentsPort {
 
     private final PaymentsService payments;
     private final PayPalHttpClient payPalClient;
+    private final PaymentsRedirectProperties redirects;
 
-    public PayPalAdapter(PaymentsService payments, PayPalHttpClient payPalClient) {
+    public PayPalAdapter(PaymentsService payments, PayPalHttpClient payPalClient,
+            PaymentsRedirectProperties redirects) {
         this.payments = payments;
         this.payPalClient = payPalClient;
+        this.redirects = redirects;
     }
-    
+
     @Override
     public CreatePaymentResult createPayment(CreatePaymentRequest request) {
         payments.recordInitiated(OrderId.of(request.orderId()), request.tenantId(), request.amount(), "PAYPAL");
@@ -43,7 +47,7 @@ public class PayPalAdapter implements PaymentsPort {
                         .findFirst()
                         .orElseThrow(() -> new NoSuchElementException("Approval URL not found in PayPal response"))
                         .href();
-                
+
                 return new CreatePaymentResult(order.id(), approvalUrl);
             } else {
                 throw new IOException("PayPal create order failed with status: " + response.statusCode());
@@ -64,35 +68,32 @@ public class PayPalAdapter implements PaymentsPort {
 
             if (response.statusCode() == 201 || response.statusCode() == 200) {
                 String captureId = capturedOrder.purchaseUnits().get(0).payments().captures().get(0).id();
-                
+
                 payments.recordApproved(
-                    OrderId.of(request.orderId()),
-                    request.tenantId(),
-                    request.amount(),
-                    "PAYPAL",
-                    captureId
-                );
+                        OrderId.of(request.orderId()),
+                        request.tenantId(),
+                        request.amount(),
+                        "PAYPAL",
+                        captureId);
                 return new CapturePaymentResult(true, captureId, null);
             } else {
                 String reason = "PayPal capture failed with status: " + response.statusCode();
                 payments.recordDeclined(
-                    OrderId.of(request.orderId()),
-                    request.tenantId(),
-                    request.amount(),
-                    "PAYPAL",
-                    reason
-                );
+                        OrderId.of(request.orderId()),
+                        request.tenantId(),
+                        request.amount(),
+                        "PAYPAL",
+                        reason);
                 return new CapturePaymentResult(false, null, reason);
             }
         } catch (IOException e) {
             String reason = e.getMessage();
             payments.recordDeclined(
-                OrderId.of(request.orderId()),
-                request.tenantId(),
-                request.amount(),
-                "PAYPAL",
-                reason
-            );
+                    OrderId.of(request.orderId()),
+                    request.tenantId(),
+                    request.amount(),
+                    "PAYPAL",
+                    reason);
             return new CapturePaymentResult(false, null, reason);
         }
     }
@@ -108,7 +109,17 @@ public class PayPalAdapter implements PaymentsPort {
         PurchaseUnitRequest purchaseUnitRequest = new PurchaseUnitRequest()
                 .amountWithBreakdown(amountBreakdown);
 
+        // 👇 application_context con URLs configurables
+        ApplicationContext ac = new ApplicationContext()
+                .returnUrl(redirects.success()) // éxito
+                .cancelUrl(redirects.cancel()) // cancelación/fallo
+                .brandName("Restaurant Marketplace")
+                .landingPage("LOGIN") // opcional: "NO_PREFERENCE", "LOGIN", "BILLING", etc.
+                .userAction("PAY_NOW"); // muestra “Pay Now” en PayPal
+
         orderRequest.purchaseUnits(List.of(purchaseUnitRequest));
+        orderRequest.applicationContext(ac); // <-- setear el contexto
+
         return orderRequest;
     }
 }

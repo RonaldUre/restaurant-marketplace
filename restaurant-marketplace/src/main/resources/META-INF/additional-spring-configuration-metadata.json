@@ -19,7 +19,6 @@
     "type": "java.lang.String",
     "description": "A description for 'jwt.clockSkewSeconds'"
   },
-
   {
     "name": "security.cors.allowed-origins",
     "type": "java.lang.String",
@@ -65,7 +64,6 @@
     "type": "java.lang.String",
     "description": "A description for 'jwt.clockSkewSeconds'"
   },
-
   {
     "name": "jwt.clockSkewSeconds",
     "type": "java.lang.String",
@@ -150,5 +148,15 @@
     "name": "twilio.sms-number",
     "type": "java.lang.String",
     "description": "A description for 'twilio.sms-number'"
+  },
+  {
+    "name": "payments.redirect.success",
+    "type": "java.lang.String",
+    "description": "A description for 'payments.redirect.success'"
+  },
+  {
+    "name": "payments.redirect.cancel",
+    "type": "java.lang.String",
+    "description": "A description for 'payments.redirect.cancel'"
   }
 ]}

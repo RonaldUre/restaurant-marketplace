@@ -5,8 +5,13 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.appli
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.domain.model.vo.OrderId;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.service.PaymentsService;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.application.view.PaymentTransactionView;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.payments.infrastructure.config.PaymentsRedirectProperties;
+
 import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
+
+import java.net.URLEncoder;
+import java.nio.charset.StandardCharsets;
 import java.util.Optional;
 import java.util.UUID;
 
@@ -15,9 +20,11 @@ import java.util.UUID;
 public class FakePaymentsAdapter implements PaymentsPort {
 
     private final PaymentsService payments;
+    private final PaymentsRedirectProperties redirects;
 
-    public FakePaymentsAdapter(PaymentsService payments) {
+    public FakePaymentsAdapter(PaymentsService payments, PaymentsRedirectProperties redirects) {
         this.payments = payments;
+        this.redirects = redirects;
     }
 
     @Override
@@ -31,8 +38,18 @@ public class FakePaymentsAdapter implements PaymentsPort {
 
         // Adjuntamos el ID de la orden real al final para recuperarlo en la captura
         String fakePayPalOrderId = "FAKE-" + UUID.randomUUID() + "-" + request.orderId();
-        String fakeApprovalUrl = "http://localhost:8080/fake-paypal-approval?token=" + fakePayPalOrderId;
-        
+
+        // Construimos la URL de aprobación del "simulador" incluyendo success/cancel
+        String success = urlEncode(redirects.success());
+        String cancel  = urlEncode(redirects.cancel());
+        String token   = urlEncode(fakePayPalOrderId);
+
+        // Puedes mantener el host/puerto del back según tu dev setup
+        String fakeApprovalUrl = "http://localhost:8080/fake-paypal-approval"
+                + "?token=" + token
+                + "&success=" + success
+                + "&cancel=" + cancel;
+
         System.out.println("FAKE PAYMENTS: Generated approval link: " + fakeApprovalUrl);
 
         return new CreatePaymentResult(fakePayPalOrderId, fakeApprovalUrl);
@@ -56,12 +73,15 @@ public class FakePaymentsAdapter implements PaymentsPort {
 
         if (approved) {
             String fakeTxId = "TX-" + UUID.randomUUID();
-            // Nota: El recordApproved/Declined lo llama el módulo 'ordering',
-            // así que aquí solo devolvemos el resultado.
+            // El guardado approved/declined lo hace el módulo 'ordering' después de capturar.
             return new CapturePaymentResult(true, fakeTxId, null);
         } else {
             String reason = "declined_by_fake_gateway";
             return new CapturePaymentResult(false, null, reason);
         }
+    }
+
+    private static String urlEncode(String s) {
+        return URLEncoder.encode(s, StandardCharsets.UTF_8);
     }
 }

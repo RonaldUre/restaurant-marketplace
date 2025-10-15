@@ -63,7 +63,7 @@ public class TwilioWhatsAppAdapter implements NotificationPort {
         // Asumimos que 'to' es el email. Necesitarías un servicio para buscar el teléfono.
         // Para la prueba, puedes hardcodear tu número de teléfono aquí.
         // Ejemplo: String customerPhone = "+584121234567";
-        String customerPhone = "TU_NUMERO_DE_TELEFONO_VERIFICADO"; 
+        String customerPhone = "+584241391701"; 
         
         try {
             Message message = Message.creator(
