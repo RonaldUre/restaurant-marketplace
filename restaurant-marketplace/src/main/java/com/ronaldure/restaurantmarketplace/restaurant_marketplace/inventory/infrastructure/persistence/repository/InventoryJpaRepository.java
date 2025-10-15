@@ -5,6 +5,8 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.inventory.infr
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.stereotype.Repository;
 
+import java.util.Collection;
+import java.util.List;
 import java.util.Optional;
 
 @Repository
@@ -13,4 +15,6 @@ public interface InventoryJpaRepository extends JpaRepository<JpaInventoryEntity
     Optional<JpaInventoryEntity> findByTenantIdAndProductId(Long tenantId, Long productId);
 
     boolean existsByTenantIdAndProductId(Long tenantId, Long productId);
+    
+    List<JpaInventoryEntity> findByTenantIdAndProductIdIn(Long tenantId, Collection<Long> productIds);
 }

@@ -47,24 +47,26 @@ public class ProductWebMapper {
                 view.createdAt());
     }
 
-    // Public
-    public PublicProductDetailResponse toPublicDetailResponse(PublicProductDetailView view) {
+        public PublicProductDetailResponse toPublicDetailResponse(PublicProductDetailView view, boolean available) {
         return new PublicProductDetailResponse(
                 view.id(),
                 view.name(),
                 view.description(),
                 view.category(),
                 view.priceAmount(),
-                view.priceCurrency());
+                view.priceCurrency(),
+                available
+        );
     }
-
-    public PublicProductCardResponse toPublicCardResponse(PublicProductCardView view) {
+        public PublicProductCardResponse toPublicCardResponse(PublicProductCardView view, boolean available) {
         return new PublicProductCardResponse(
                 view.id(),
                 view.name(),
                 view.category(),
                 view.priceAmount(),
-                view.priceCurrency());
+                view.priceCurrency(),
+                available
+        );
     }
 
     // ===== nuevo: Web -> Commands =====

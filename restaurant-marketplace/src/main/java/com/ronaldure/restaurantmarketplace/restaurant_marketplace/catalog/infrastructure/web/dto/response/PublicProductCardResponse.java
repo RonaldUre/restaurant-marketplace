@@ -1,4 +1,3 @@
-// src/main/java/com/ronaldure/restaurantmarketplace/restaurant_marketplace/catalog/infrastructure/web/dto/PublicProductCardResponse.java
 package com.ronaldure.restaurantmarketplace.restaurant_marketplace.catalog.infrastructure.web.dto.response;
 
 import java.math.BigDecimal;
@@ -8,5 +7,6 @@ public record PublicProductCardResponse(
         String name,
         String category,
         BigDecimal priceAmount,
-        String priceCurrency
+        String priceCurrency,
+        boolean available               // ← NUEVO
 ) { }
