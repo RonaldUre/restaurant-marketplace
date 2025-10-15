@@ -6,6 +6,7 @@ import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.appli
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.command.CreateOrderPaymentCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.command.PlaceOrderCommand;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.query.ListOrdersAdminQueryParams;
+import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.query.ListOrdersPublicQueryParams;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.view.ApprovalLinkView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.view.OrderCardView;
 import com.ronaldure.restaurantmarketplace.restaurant_marketplace.ordering.application.view.OrderDetailView;
@@ -33,7 +34,6 @@ public class OrderWebMapper {
         return new CreatePaymentResponseDto(view.approvalUrl());
     }
 
-
     // ---------- Web -> App (commands) ----------
 
     public PlaceOrderCommand toPlaceOrderCommand(PlaceOrderRequest req) {
@@ -47,7 +47,8 @@ public class OrderWebMapper {
         return new CreateOrderPaymentCommand(orderId, dto.paymentMethod());
     }
 
-    public CaptureOrderPaymentCommand toCaptureOrderPaymentCommand(Long orderId, CapturePaymentRequestDto dto, String idempotencyKey) {
+    public CaptureOrderPaymentCommand toCaptureOrderPaymentCommand(Long orderId, CapturePaymentRequestDto dto,
+            String idempotencyKey) {
         return new CaptureOrderPaymentCommand(orderId, dto.paymentProviderOrderId(), idempotencyKey);
     }
 
@@ -56,13 +57,15 @@ public class OrderWebMapper {
         return new CancelOrderCommand(orderId, nullIfBlank(reason));
     }
 
-
     // ---------- Web -> App (query params) ----------
 
     public ListOrdersAdminQueryParams toParams(ListOrdersAdminRequest req) {
         return req.toQueryParams();
     }
 
+    public ListOrdersPublicQueryParams toParams(ListOrdersPublicRequest req) {
+        return req.toQueryParams();
+    }
 
     // ---------- helpers ----------
 
