@@ -1,0 +1,19 @@
+# Git
+.git
+.gitignore
+
+# Maven
+target
+.mvn/wrapper/maven-wrapper.jar
+
+# IDE
+.idea
+.vscode
+*.iml
+
+# OS
+.DS_Store
+
+# Config local / secretos
+config/application-dev.secrets.properties
+env.*.yaml
