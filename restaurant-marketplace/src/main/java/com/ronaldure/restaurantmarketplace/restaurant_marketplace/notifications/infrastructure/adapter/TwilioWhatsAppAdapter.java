@@ -18,63 +18,82 @@ public class TwilioWhatsAppAdapter implements NotificationPort {
 
     private static final Logger log = LoggerFactory.getLogger(TwilioWhatsAppAdapter.class);
 
-    @Value("${twilio.account-sid}")
-    private String accountSid;
+    private final String accountSid;
+    private final String authToken;
+    private final String fromNumber;
+    private final boolean sandboxEnabled;
+    private final String sandboxRecipient;
 
-    @Value("${twilio.auth-token}")
-    private String authToken;
+    private final NotificationService composer;
 
-    @Value("${twilio.sandbox-number}")
-    private String fromNumber;
-
-    private final NotificationService composer; // Ahora sí lo usaremos
-
-    public TwilioWhatsAppAdapter(NotificationService composer) {
+    public TwilioWhatsAppAdapter(
+            NotificationService composer,
+            @Value("${twilio.account-sid}") String accountSid,
+            @Value("${twilio.auth-token}") String authToken,
+            @Value("${twilio.sandbox-number}") String fromNumber,
+            @Value("${twilio.sandbox.enabled:false}") boolean sandboxEnabled,
+            @Value("${notifications.whatsapp.sandbox-recipient:}") String sandboxRecipient) {
         this.composer = composer;
+        this.accountSid = accountSid;
+        this.authToken = authToken;
+        this.fromNumber = fromNumber;
+        this.sandboxEnabled = sandboxEnabled;
+        this.sandboxRecipient = sandboxRecipient;
     }
 
     @PostConstruct
     public void init() {
+        if (sandboxEnabled && (sandboxRecipient == null || sandboxRecipient.isBlank())) {
+            throw new IllegalStateException(
+                "twilio.sandbox.enabled=true pero notifications.whatsapp.sandbox-recipient está vacío");
+        }
         Twilio.init(accountSid, authToken);
+        log.info("Twilio inicializado. Sandbox: {}", sandboxEnabled);
     }
 
     @Override
     public void sendOrderConfirmed(String to, long orderId, String restaurantName, String summary) {
-        // ✅ CORRECTO: Usamos el composer para crear el mensaje
-        NotificationService.Message message = composer.composeOrderConfirmed(to, orderId, restaurantName, summary);
-        sendMessage(to, message.body());
+        NotificationService.Message msg = composer.composeOrderConfirmed(to, orderId, restaurantName, summary);
+        sendMessage(resolveRecipient(to), msg.body());
     }
 
     @Override
     public void sendOrderCancelled(String to, long orderId, String reason) {
-        // ✅ CORRECTO: Usamos el composer para crear el mensaje
-        NotificationService.Message message = composer.composeOrderCancelled(to, orderId, reason);
-        sendMessage(to, message.body());
+        NotificationService.Message msg = composer.composeOrderCancelled(to, orderId, reason);
+        sendMessage(resolveRecipient(to), msg.body());
     }
 
     @Override
     public void sendPaymentFailed(String to, long orderId, String reason) {
-        // ✅ CORRECTO: Usamos el composer para crear el mensaje
-        NotificationService.Message message = composer.composePaymentFailed(to, orderId, reason);
-        sendMessage(to, message.body());
+        NotificationService.Message msg = composer.composePaymentFailed(to, orderId, reason);
+        sendMessage(resolveRecipient(to), msg.body());
+    }
+
+    private String resolveRecipient(String to) {
+        if (sandboxEnabled) {
+            return sandboxRecipient; // en sandbox siempre enviamos al verificado
+        }
+        if (to == null || to.isBlank()) {
+            throw new IllegalArgumentException("El destinatario 'to' es obligatorio en producción");
+        }
+        return to;
     }
 
     private void sendMessage(String to, String body) {
-        // Asumimos que 'to' es el email. Necesitarías un servicio para buscar el teléfono.
-        // Para la prueba, puedes hardcodear tu número de teléfono aquí.
-        // Ejemplo: String customerPhone = "+584121234567";
-        String customerPhone = "+584241391701"; 
-        
+        // Asegura formato WhatsApp
+        String toWhatsApp = to.startsWith("whatsapp:") ? to : "whatsapp:" + to;
+        String fromWhatsApp = fromNumber.startsWith("whatsapp:") ? fromNumber : "whatsapp:" + fromNumber;
+
         try {
             Message message = Message.creator(
-                    new PhoneNumber("whatsapp:" + customerPhone),
-                    new PhoneNumber("whatsapp:" + fromNumber),
-                    body)
-                .create();
+                    new PhoneNumber(toWhatsApp),
+                    new PhoneNumber(fromWhatsApp),
+                    body
+            ).create();
 
             log.info("[notifications][WHATSAPP_SENT] SID: {}", message.getSid());
         } catch (Exception e) {
-            log.error("[notifications][WHATSAPP_FAILED] Error sending message to {}: {}", customerPhone, e.getMessage());
+            log.error("[notifications][WHATSAPP_FAILED] Error sending to {}: {}", to, e.getMessage(), e);
         }
     }
 }

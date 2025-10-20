@@ -158,5 +158,50 @@
     "name": "payments.redirect.cancel",
     "type": "java.lang.String",
     "description": "A description for 'payments.redirect.cancel'"
+  },
+  {
+    "name": "TWILIO_ACCOUNT_SID",
+    "type": "java.lang.String",
+    "description": "A description for 'TWILIO_ACCOUNT_SID'"
+  },
+  {
+    "name": "TWILIO_AUTH_TOKEN",
+    "type": "java.lang.String",
+    "description": "A description for 'TWILIO_AUTH_TOKEN'"
+  },
+  {
+    "name": "TWILIO_SANDBOX_NUMBER",
+    "type": "java.lang.String",
+    "description": "A description for 'TWILIO_SANDBOX_NUMBER'"
+  },
+  {
+    "name": "TWILIO_SMS_NUMBER",
+    "type": "java.lang.String",
+    "description": "A description for 'TWILIO_SMS_NUMBER'"
+  },
+  {
+    "name": "PAYPAL_CLIENT_ID",
+    "type": "java.lang.String",
+    "description": "A description for 'PAYPAL_CLIENT_ID'"
+  },
+  {
+    "name": "PAYPAL_CLIENT_SECRET",
+    "type": "java.lang.String",
+    "description": "A description for 'PAYPAL_CLIENT_SECRET'"
+  },
+  {
+    "name": "GMAIL_USERNAME",
+    "type": "java.lang.String",
+    "description": "A description for 'GMAIL_USERNAME'"
+  },
+  {
+    "name": "GMAIL_PASSWORD",
+    "type": "java.lang.String",
+    "description": "A description for 'GMAIL_PASSWORD'"
+  },
+  {
+    "name": "PAYPAL_CLIENT_SECRET",
+    "type": "java.lang.String",
+    "description": "A description for 'PAYPAL_CLIENT_SECRET'"
   }
 ]}

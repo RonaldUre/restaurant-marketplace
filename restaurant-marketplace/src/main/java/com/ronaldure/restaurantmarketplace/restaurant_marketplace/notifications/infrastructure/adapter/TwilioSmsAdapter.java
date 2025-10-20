@@ -57,7 +57,7 @@ public class TwilioSmsAdapter implements NotificationPort {
 
     private void sendMessage(String to, String body) {
         // Para la prueba, hardcodea tu número de teléfono verificado en Twilio
-        String customerPhone = "TU_NUMERO_DE_TELEFONO_VERIFICADO"; // Formato E.164: +584121234567
+        String customerPhone = "+584241391701"; // Formato E.164: +584121234567
 
         try {
             // LA ÚNICA DIFERENCIA ES AQUÍ: no usamos el prefijo "whatsapp:"
