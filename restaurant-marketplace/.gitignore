@@ -33,3 +33,4 @@ build/
 .vscode/
 
 /config/application-dev.secrets.properties
+/env.prod.yaml
