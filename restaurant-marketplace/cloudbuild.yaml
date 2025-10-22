@@ -1,4 +1,7 @@
 # cloudbuild.yaml
+options:
+  logging: CLOUD_LOGGING_ONLY
+
 substitutions:
   _PROJECT_ID: "project-2033dcf0-d278-4827-a12"
   _REGION: "us-central1"
