@@ -14,12 +14,13 @@ images:
   - "us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA"
 
 steps:
-  # 1) Build (Dockerfile en la raíz, contexto en la raíz)
+  # 1) Build: trabajar dentro de la carpeta backend
   - name: "gcr.io/cloud-builders/docker"
+    dir: "restaurant-marketplace"
     args:
       [
         "build",
-        "-f","Dockerfile",                                # 👈 explícito
+        "-f","Dockerfile",                                 # Dockerfile en esta carpeta
         "-t","us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA",
         "."
       ]
@@ -32,8 +33,9 @@ steps:
         "us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA"
       ]
 
-  # 3) Deploy a Cloud Run (env públicos + secretos)
+  # 3) Deploy a Cloud Run (desde la carpeta para que encuentre env.public.yaml)
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    dir: "restaurant-marketplace"
     entrypoint: bash
     args:
       - -c
