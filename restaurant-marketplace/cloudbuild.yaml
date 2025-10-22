@@ -1,0 +1,43 @@
+# cloudbuild.yaml
+substitutions:
+  _REGION: "us-central1"
+  _SERVICE: "restaurant-marketplace"
+  _REPOSITORY: "containers"  # nombre del repo en Artifact Registry
+  _PROJECT_ID: "project-2033dcf0-d278-4827-a12"
+  _CLOUDSQL: "project-2033dcf0-d278-4827-a12:us-central1:restaurant-sql"
+
+images:
+  - "us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA"
+
+steps:
+  # 1) Build & push con Dockerfile
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "build",
+        "-t","us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA",
+        "."
+      ]
+
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      [
+        "push",
+        "us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA"
+      ]
+
+  # 2) Deploy a Cloud Run
+  - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        gcloud run deploy ${_SERVICE} \
+          --image us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA \
+          --region ${_REGION} \
+          --allow-unauthenticated \
+          --service-account cloud-run-exec@${_PROJECT_ID}.iam.gserviceaccount.com \
+          --add-cloudsql-instances ${_CLOUDSQL} \
+          --port 8080 --cpu 1 --memory 512Mi --timeout 600 \
+          --min-instances 0 --max-instances 3 \
+          --env-vars-file env.prod.yaml
