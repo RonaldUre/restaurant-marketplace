@@ -1,16 +1,17 @@
 # cloudbuild.yaml
 substitutions:
+  _PROJECT_ID: "project-2033dcf0-d278-4827-a12"
   _REGION: "us-central1"
   _SERVICE: "restaurant-marketplace"
-  _REPOSITORY: "containers"  # nombre del repo en Artifact Registry
-  _PROJECT_ID: "project-2033dcf0-d278-4827-a12"
+  _REPOSITORY: "containers"
   _CLOUDSQL: "project-2033dcf0-d278-4827-a12:us-central1:restaurant-sql"
+  _MEMORY: "1Gi"
 
 images:
   - "us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA"
 
 steps:
-  # 1) Build & push con Dockerfile
+  # 1) Build con Dockerfile
   - name: "gcr.io/cloud-builders/docker"
     args:
       [
@@ -19,6 +20,7 @@ steps:
         "."
       ]
 
+  # 2) Push a Artifact Registry
   - name: "gcr.io/cloud-builders/docker"
     args:
       [
@@ -26,7 +28,7 @@ steps:
         "us-central1-docker.pkg.dev/${_PROJECT_ID}/${_REPOSITORY}/${_SERVICE}:$SHORT_SHA"
       ]
 
-  # 2) Deploy a Cloud Run
+  # 3) Deploy a Cloud Run (env públicos + secretos del Secret Manager)
   - name: "gcr.io/google.com/cloudsdktool/cloud-sdk"
     entrypoint: bash
     args:
@@ -37,7 +39,12 @@ steps:
           --region ${_REGION} \
           --allow-unauthenticated \
           --service-account cloud-run-exec@${_PROJECT_ID}.iam.gserviceaccount.com \
-          --add-cloudsql-instances ${_CLOUDSQL} \
-          --port 8080 --cpu 1 --memory 512Mi --timeout 600 \
-          --min-instances 0 --max-instances 3 \
-          --env-vars-file env.prod.yaml
+          --set-cloudsql-instances ${_CLOUDSQL} \
+          --port 8080 \
+          --cpu 1 \
+          --memory ${_MEMORY} \
+          --timeout 600 \
+          --min-instances 0 \
+          --max-instances 3 \
+          --env-vars-file env.public.yaml \
+          --set-secrets "DB_PASS=db-pass:latest,JWT_SECRET=jwt-secret:latest,REFRESH_JWT_SECRET=refresh-jwt-secret:latest,GMAIL_PASSWORD=gmail-password:latest,PAYPAL_CLIENT_SECRET=paypal-client-secret:latest,TWILIO_AUTH_TOKEN=twilio-auth-token:latest,TWILIO_ACCOUNT_SID=twilio-account-sid:latest"
